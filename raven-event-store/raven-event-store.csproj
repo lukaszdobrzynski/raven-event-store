@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>Raven.EventStore</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="IdGen" Version="3.0.7" />
+      <PackageReference Include="RavenDB.Client" Version="7.0.1" />
+    </ItemGroup>
+
+</Project>
