@@ -18,6 +18,7 @@ public class DocumentStoreHolder
             store.ConfigureEventStore(options =>
             {
                 options.Projections.Add<UserProjection>();
+                options.Snapshots.Add<User>();
             });
             
             return store;
