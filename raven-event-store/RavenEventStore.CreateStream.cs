@@ -68,7 +68,7 @@ public partial class RavenEventStore
 
             await session.StoreAsync(stream);
 
-            await RunProjectionAndStoreAsync(stream, session);
+            await RunProjectionsAndStoreAsync(stream, session);
             await AppendToGlobalLogAsync(session, events, stream.Id);
             
             await session.SaveChangesAsync();
@@ -94,7 +94,7 @@ public partial class RavenEventStore
 
             session.Store(stream);
 
-            RunProjectionAndStore(stream, session);
+            RunProjectionsAndStore(stream, session);
             AppendToGlobalLog(session, events, stream.Id);
             
             session.SaveChanges();
