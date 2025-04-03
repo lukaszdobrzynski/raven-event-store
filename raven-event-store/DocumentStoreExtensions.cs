@@ -19,6 +19,13 @@ public static class DocumentStoreExtensions
         ConfigureProjections(options.Projections);
         ConfigureSnapshots(options.Snapshots);
     }
+    
+    public static void ConfigureEventStore(this IDocumentStore documentStore)
+    {
+        ArgumentNullException.ThrowIfNull(documentStore);
+
+        _eventStore = new RavenEventStore(documentStore);
+    }
 
     public static RavenEventStore GetEventStore(this IDocumentStore _)
     {
