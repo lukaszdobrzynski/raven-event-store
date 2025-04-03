@@ -17,6 +17,7 @@ public static class DocumentStoreExtensions
         configure(options);
 
         ConfigureProjections(options.Projections);
+        ConfigureSnapshots(options.Snapshots);
     }
 
     public static RavenEventStore GetEventStore(this IDocumentStore _)
@@ -29,6 +30,14 @@ public static class DocumentStoreExtensions
         foreach (var type in projections.Types)
         {
             _eventStore.AddProjection(type);
+        }
+    }
+
+    private static void ConfigureSnapshots(RavenEventStoreSnapshots snapshots)
+    {
+        foreach (var type in snapshots.Types)
+        {
+            _eventStore.AddSnapshot(type);
         }
     }
 }

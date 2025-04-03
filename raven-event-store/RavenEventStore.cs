@@ -8,6 +8,7 @@ namespace Raven.EventStore;
 public partial class RavenEventStore
 {
     private readonly HashSet<Type> _projections = [];
+    private readonly HashSet<Type> _snapshots = [];
     private static readonly IdGenerator GlobalEventLogSequentialIdGenerator = new (0);
     private IDocumentStore DocumentStore { get; }
 
