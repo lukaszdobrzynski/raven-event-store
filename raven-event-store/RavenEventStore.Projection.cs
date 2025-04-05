@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Raven.Client.Documents.Session;
 
 namespace Raven.EventStore;
 
@@ -18,30 +17,22 @@ public partial class RavenEventStore
         _settings.Projections.Add(projection);
     }
 
-    private async Task RunProjectionsAndStoreAsync<TStream>(TStream stream, IAsyncDocumentSession session) where TStream : DocumentStream
+    private List<IProjection> RunProjections<TStream>(TStream stream) where TStream : DocumentStream
     {
         var projections = GetMatchingProjections(stream);
-        
-        foreach (var projection in projections)
+
+        var projectionTasks = projections.Select(projection => Task.Run(() =>
         {
             var instance = (IProjection)Activator.CreateInstance(projection);
             instance.Project(stream);
-            await session.StoreAsync(instance);
-        }
+            return instance;
+        })).ToArray();
+        
+        Task.WaitAll(projectionTasks.Select(Task (t) => t).ToArray());
+
+        return projectionTasks.Select(task => task.Result).ToList();
     }
     
-    private void RunProjectionsAndStore<TStream>(TStream stream, IDocumentSession session) where TStream : DocumentStream
-    {
-        var projections = GetMatchingProjections(stream);
-
-        foreach (var projection in projections)
-        {
-            var instance = (IProjection)Activator.CreateInstance(projection);
-            instance.Project(stream);
-            session.Store(instance);
-        }
-    }
-
     private IEnumerable<Type> GetMatchingProjections<TStream>(TStream stream) where TStream : DocumentStream
     {
         var projectionType = typeof(Projection<>).MakeGenericType(stream.GetType());

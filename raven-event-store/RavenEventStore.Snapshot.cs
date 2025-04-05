@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
-using Raven.Client.Documents.Session;
 
 namespace Raven.EventStore;
 
@@ -17,7 +15,7 @@ public partial class RavenEventStore
         _settings.Snapshots.Add(snapshot);
     }
 
-    private async Task TakeSnapshotAndStoreAsync<TStream>(TStream stream, IAsyncDocumentSession session) where TStream : DocumentStream
+    private IAggregate TakeSnapshot<TStream>(TStream stream) where TStream : DocumentStream
     {
         var aggregateType = GetAggregateType(stream);
 
@@ -25,20 +23,10 @@ public partial class RavenEventStore
         {
             var instance = (IAggregate)Activator.CreateInstance(aggregateType);
             instance.AggregateEvents(stream);
-            await session.StoreAsync(instance);
+            return instance;
         };
-    }
 
-    private void TakeSnapshotAndStore<TStream>(TStream stream, IDocumentSession session) where TStream : DocumentStream
-    {
-        var aggregateType = GetAggregateType(stream);
-
-        if (aggregateType is not null)
-        {
-            var instance = (IAggregate)Activator.CreateInstance(aggregateType);
-            instance.AggregateEvents(stream);
-            session.Store(instance);
-        }
+        return null;
     }
 
     private Type GetAggregateType<TStream>(TStream stream) where TStream : DocumentStream

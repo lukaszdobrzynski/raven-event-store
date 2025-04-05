@@ -62,8 +62,9 @@ public partial class RavenEventStore
             stream.Events.AddRange(events);
             stream.UpdatedAt = DateTime.UtcNow;
             
-            await TakeSnapshotAndStoreAsync(stream, session);
-            await RunProjectionsAndStoreAsync(stream, session);
+            var (snapshot, projections) = RunSnapshotAndProjections(stream);
+            
+            await StoreSnapshotAndProjectionsAsync(session, snapshot, projections);
             await AppendToGlobalLogAsync(session, events, stream.Id);
             
             await session.SaveChangesAsync();
@@ -85,8 +86,9 @@ public partial class RavenEventStore
             stream.Events.AddRange(events);
             stream.UpdatedAt = DateTime.UtcNow;
             
-            TakeSnapshotAndStore(stream, session);
-            RunProjectionsAndStore(stream, session);
+            var (snapshot, projections) = RunSnapshotAndProjections(stream);
+            
+            StoreSnapshotAndProjections(session, snapshot, projections);
             AppendToGlobalLog(session, events, streamId);
             
             session.SaveChanges();
