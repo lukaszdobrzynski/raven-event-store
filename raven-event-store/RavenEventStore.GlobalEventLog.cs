@@ -11,24 +11,37 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
+    internal void SetUseGlobalStreamLogging(bool useGlobalStreamLLogging) =>
+        _settings.UseGlobalStreamLogging = useGlobalStreamLLogging;
+    
     private async Task AppendToGlobalLogAsync(IAsyncDocumentSession session, List<Event> events, string streamId)
     {
-        foreach (var @event in events)
+        if (_settings.UseGlobalStreamLogging)
         {
-            var sequence = GetSequence();
-            var log = GlobalEventLog.From(sequence, streamId, @event);
-            await session.StoreAsync(log);
+            foreach (var @event in events)
+            {
+                var log = CreateGlobalEventLog(streamId, @event);
+                await session.StoreAsync(log);
+            }    
         }
     }
     
     private void AppendToGlobalLog(IDocumentSession session, List<Event> events, string streamId)
     {
-        foreach (var @event in events)
+        if (_settings.UseGlobalStreamLogging)
         {
-            var sequence = GetSequence();
-            var log = GlobalEventLog.From(sequence, streamId, @event);
-            session.Store(log);
+            foreach (var @event in events)
+            {
+                var log = CreateGlobalEventLog(streamId, @event);
+                session.Store(log);
+            }    
         }
+    }
+
+    private GlobalEventLog CreateGlobalEventLog(string streamId, Event @event)
+    {
+        var sequence = GetSequence();
+        return GlobalEventLog.From(sequence, streamId, @event);
     }
 
     private static string GetSequence() => GlobalEventLogSequentialIdGenerator.CreateId().ToString();

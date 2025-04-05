@@ -18,6 +18,7 @@ public static class DocumentStoreExtensions
 
         ConfigureProjections(options.Projections);
         ConfigureSnapshots(options.Snapshots);
+        ConfigureGlobalStreamLogging(options.UseGlobalStreamLogging);
     }
     
     public static void ConfigureEventStore(this IDocumentStore documentStore)
@@ -47,4 +48,6 @@ public static class DocumentStoreExtensions
             _eventStore.AddSnapshot(type);
         }
     }
+    
+    private static void ConfigureGlobalStreamLogging(bool use) => _eventStore.SetUseGlobalStreamLogging(use);
 }

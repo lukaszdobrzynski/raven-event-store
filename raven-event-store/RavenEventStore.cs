@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using IdGen;
 using Raven.Client.Documents;
 
@@ -7,9 +6,9 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private readonly HashSet<Type> _projections = [];
-    private readonly HashSet<Type> _snapshots = [];
+    private readonly EventStoreSettings _settings = new();
     private static readonly IdGenerator GlobalEventLogSequentialIdGenerator = new (0);
+    
     private IDocumentStore DocumentStore { get; }
 
     internal RavenEventStore(IDocumentStore documentStore)

@@ -10,12 +10,12 @@ public partial class RavenEventStore
 {
     internal void AddProjection(Type projection)
     {
-        if (_projections.TryGetValue(projection, out _))
+        if (_settings.Projections.TryGetValue(projection, out _))
         {
             throw new ArgumentException($"Projection of type {projection.FullName} is already registered");
         }
         
-        _projections.Add(projection);
+        _settings.Projections.Add(projection);
     }
 
     private async Task RunProjectionsAndStoreAsync<TStream>(TStream stream, IAsyncDocumentSession session) where TStream : DocumentStream
@@ -45,6 +45,6 @@ public partial class RavenEventStore
     private IEnumerable<Type> GetMatchingProjections<TStream>(TStream stream) where TStream : DocumentStream
     {
         var projectionType = typeof(Projection<>).MakeGenericType(stream.GetType());
-        return _projections.Where(projection => projection.IsSubclassOf(projectionType));
+        return _settings.Projections.Where(projection => projection.IsSubclassOf(projectionType));
     }
 }

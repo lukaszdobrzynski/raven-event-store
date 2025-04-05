@@ -9,12 +9,12 @@ public partial class RavenEventStore
 {
     internal void AddSnapshot(Type snapshot)
     {
-        if (_snapshots.TryGetValue(snapshot, out _))
+        if (_settings.Snapshots.TryGetValue(snapshot, out _))
         {
             throw new ArgumentException($"Snapshot of type {snapshot.FullName} is already registered");
         }
 
-        _snapshots.Add(snapshot);
+        _settings.Snapshots.Add(snapshot);
     }
 
     private async Task TakeSnapshotAndStoreAsync<TStream>(TStream stream, IAsyncDocumentSession session) where TStream : DocumentStream
@@ -44,6 +44,6 @@ public partial class RavenEventStore
     private Type GetAggregateType<TStream>(TStream stream) where TStream : DocumentStream
     {
         var aggregateType = typeof(Aggregate<>).MakeGenericType(stream.GetType());
-        return _snapshots.SingleOrDefault(x => x.IsSubclassOf(aggregateType));
+        return _settings.Snapshots.SingleOrDefault(x => x.IsSubclassOf(aggregateType));
     }
 }

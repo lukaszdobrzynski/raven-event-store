@@ -8,6 +8,8 @@ public class RavenEventStoreConfigurationOptions
     internal RavenEventStoreConfigurationOptions() {}
     public RavenEventStoreProjections Projections { get; } = new();
     public RavenEventStoreSnapshots Snapshots { get; } = new();
+
+    public bool UseGlobalStreamLogging { get; set; }
 }
 
 public class RavenEventStoreProjections
