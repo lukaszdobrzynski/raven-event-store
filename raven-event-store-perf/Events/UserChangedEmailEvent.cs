@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Raven.EventStore.Client.Events;
+namespace Raven.EventStore.Perf.Events;
 
 public class UserChangedEmailEvent : Event
 {

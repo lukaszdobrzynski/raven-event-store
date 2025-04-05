@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "raven-event-store", "raven-event-store\raven-event-store.csproj", "{35C03CD0-44DE-4C26-965F-CD6AA576D642}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "raven-event-store-client", "raven-event-store-client\raven-event-store-client.csproj", "{6E65A4E6-2073-44D9-96F0-932861198612}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "raven-event-store-perf", "raven-event-store-perf\raven-event-store-perf.csproj", "{6E65A4E6-2073-44D9-96F0-932861198612}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

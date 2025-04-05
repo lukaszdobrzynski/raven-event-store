@@ -1,9 +1,9 @@
 ﻿using System;
-using Raven.EventStore.Client.Events;
+using Raven.EventStore.Perf.Events;
 
-namespace Raven.EventStore.Client;
+namespace Raven.EventStore.Perf;
 
-public class User : Aggregate<UserStream>
+public class UserProjection : Projection<UserStream>
 {
     public string Username { get; set; }
     public string Email { get; set; }
@@ -12,7 +12,8 @@ public class User : Aggregate<UserStream>
     public DateTime RegisteredAt { get; set; }
     public DateTime? VerifiedAt { get; set; }
     public DateTime? ActivationStatusChangedAt { get; set; }
-    protected override void AggregateEvents(UserStream userStream)
+
+    protected override void Project(UserStream userStream)
     {
         var events = userStream.Events;
         
@@ -43,7 +44,7 @@ public class User : Aggregate<UserStream>
 
     protected override string GetId(UserStream stream)
     {
-        return stream.Id + "/" + "Snapshot";
+        return stream.Id + "/" + $"{nameof(UserProjection)}";
     }
 
     private void Apply(UserRegisteredEvent @event)

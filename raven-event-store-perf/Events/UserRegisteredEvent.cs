@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Raven.EventStore.Client;
+namespace Raven.EventStore.Perf.Events;
 
 public class UserRegisteredEvent : Event
 {
