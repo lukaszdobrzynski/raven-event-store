@@ -41,11 +41,6 @@ public class User : Aggregate<UserStream>
         }
     }
 
-    protected override string GetId(UserStream stream)
-    {
-        return stream.Id + "/" + "Snapshot";
-    }
-
     private void Apply(UserRegisteredEvent @event)
     {
         Username = @event.Username;

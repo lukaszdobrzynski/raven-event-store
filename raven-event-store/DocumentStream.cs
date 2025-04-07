@@ -10,4 +10,6 @@ public abstract class DocumentStream
     public int Position => Events.Count;
     public DateTime? UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Aggregate SeedSnapshot { get; set; }
+    public Aggregate ArchiveSnapshot { get; set; }
 }

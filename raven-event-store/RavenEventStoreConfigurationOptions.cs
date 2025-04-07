@@ -28,7 +28,7 @@ public class RavenEventStoreSnapshots
     internal List<Type> Types { get; } = [];
     internal RavenEventStoreSnapshots() {}
 
-    public void Add<TAggregate>() where TAggregate : IAggregate
+    public void Add<TAggregate>() where TAggregate : Aggregate
     {
         Types.Add(typeof(TAggregate));
     }

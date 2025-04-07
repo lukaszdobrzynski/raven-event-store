@@ -23,7 +23,7 @@ public partial class RavenEventStore
         events.ForEach(e => e.Version = nextVersion++);
     }
     
-    private (IAggregate snapshot, List<IProjection> projections) RunSnapshotAndProjections<TStream>(TStream stream) where TStream : DocumentStream
+    private (Aggregate snapshot, List<IProjection> projections) RunSnapshotAndProjections<TStream>(TStream stream) where TStream : DocumentStream
     {
         var takeSnapshotTask = Task.Run(() => TakeSnapshot(stream));
         var projectionsTask = Task.Run(() => RunProjections(stream));
@@ -33,7 +33,7 @@ public partial class RavenEventStore
         return (takeSnapshotTask.Result, projectionsTask.Result);
     }
     
-    private static async Task StoreSnapshotAndProjectionsAsync(IAsyncDocumentSession session, IAggregate aggregateSnapshot,
+    private static async Task StoreSnapshotAndProjectionsAsync(IAsyncDocumentSession session, Aggregate aggregateSnapshot,
         List<IProjection> projections)
     {
         if (aggregateSnapshot != null)
@@ -47,7 +47,7 @@ public partial class RavenEventStore
         }
     }
     
-    private static void StoreSnapshotAndProjections(IDocumentSession session, IAggregate aggregateSnapshot, List<IProjection> projections)
+    private static void StoreSnapshotAndProjections(IDocumentSession session, Aggregate aggregateSnapshot, List<IProjection> projections)
     {
         if (aggregateSnapshot != null)
         {

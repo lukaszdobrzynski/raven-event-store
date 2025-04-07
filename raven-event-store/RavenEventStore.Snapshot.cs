@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Raven.EventStore;
 
@@ -15,18 +16,20 @@ public partial class RavenEventStore
         _settings.Snapshots.Add(snapshot);
     }
 
-    private IAggregate TakeSnapshot<TStream>(TStream stream) where TStream : DocumentStream
+    private Aggregate TakeSnapshot<TStream>(TStream stream) where TStream : DocumentStream
     {
         var aggregateType = GetAggregateType(stream);
+        if (aggregateType == null)
+            return null;
 
-        if (aggregateType is not null)
-        {
-            var instance = (IAggregate)Activator.CreateInstance(aggregateType);
-            instance.AggregateEvents(stream);
-            return instance;
-        };
+        var instance = stream.SeedSnapshot is not null
+            ? (Aggregate)JsonConvert.DeserializeObject(
+                JsonConvert.SerializeObject(stream.SeedSnapshot),
+                aggregateType)
+            : (Aggregate)Activator.CreateInstance(aggregateType);
 
-        return null;
+        instance.AggregateEvents(stream);
+        return instance;
     }
 
     private Type GetAggregateType<TStream>(TStream stream) where TStream : DocumentStream
