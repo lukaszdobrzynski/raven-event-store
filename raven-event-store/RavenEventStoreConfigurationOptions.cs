@@ -6,21 +6,8 @@ namespace Raven.EventStore;
 public class RavenEventStoreConfigurationOptions
 {
     internal RavenEventStoreConfigurationOptions() {}
-    public RavenEventStoreProjections Projections { get; } = new();
     public RavenEventStoreSnapshots Snapshots { get; } = new();
-
     public bool UseGlobalStreamLogging { get; set; }
-}
-
-public class RavenEventStoreProjections
-{
-    internal List<Type> Types { get; } = [];
-    internal RavenEventStoreProjections() {}
-
-    public void Add<TProjection>() where TProjection : IProjection
-    {
-        Types.Add(typeof(TProjection));
-    }
 }
 
 public class RavenEventStoreSnapshots
@@ -28,8 +15,8 @@ public class RavenEventStoreSnapshots
     internal List<Type> Types { get; } = [];
     internal RavenEventStoreSnapshots() {}
 
-    public void Add<TAggregate>() where TAggregate : Aggregate
+    public void Add<TSnapshot>() where TSnapshot : Snapshot
     {
-        Types.Add(typeof(TAggregate));
+        Types.Add(typeof(TSnapshot));
     }
 }

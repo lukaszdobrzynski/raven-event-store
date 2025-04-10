@@ -16,7 +16,6 @@ public static class DocumentStoreExtensions
         var options = new RavenEventStoreConfigurationOptions();
         configure(options);
 
-        ConfigureProjections(options.Projections);
         ConfigureSnapshots(options.Snapshots);
         ConfigureGlobalStreamLogging(options.UseGlobalStreamLogging);
     }
@@ -33,19 +32,11 @@ public static class DocumentStoreExtensions
         return _eventStore;
     }
 
-    private static void ConfigureProjections(RavenEventStoreProjections projections)
-    {
-        foreach (var type in projections.Types)
-        {
-            _eventStore.AddProjection(type);
-        }
-    }
-
     private static void ConfigureSnapshots(RavenEventStoreSnapshots snapshots)
     {
         foreach (var type in snapshots.Types)
         {
-            _eventStore.AddSnapshot(type);
+            _eventStore.RegisterSnapshot(type);
         }
     }
     

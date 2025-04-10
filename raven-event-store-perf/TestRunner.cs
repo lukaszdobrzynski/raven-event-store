@@ -56,9 +56,6 @@ public class TestRunner : IDisposable
             var users = await session.Query<User>().ToListAsync();
             users.ForEach(user => session.Delete(user));
 
-            var userProjections = await session.Query<UserProjection>().ToListAsync();
-            userProjections.ForEach(projection => session.Delete(projection));
-
             var userStreams = await session.Query<UserStream>().ToListAsync();
             userStreams.ForEach(userStream => session.Delete(userStream));
 

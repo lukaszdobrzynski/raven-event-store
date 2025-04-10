@@ -62,15 +62,20 @@ public partial class RavenEventStore
             var stream = new TStream
             {
                 Id = streamId,
+                LogicalId = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
                 Events = events
             };
 
             await session.StoreAsync(stream);
 
-            var (snapshot, projections) = RunSnapshotAndProjections(stream);
+            var snapshot = TakeSnapshot(stream);
+
+            if (snapshot is not null)
+            {
+                await session.StoreAsync(snapshot);
+            }
             
-            await StoreSnapshotAndProjectionsAsync(session, snapshot, projections);
             await AppendToGlobalLogAsync(session, events, stream.Id);
             
             await session.SaveChangesAsync();
@@ -90,15 +95,20 @@ public partial class RavenEventStore
             var stream = new TStream
             {
                 Id = streamId,
+                LogicalId = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
                 Events = events
             };
 
             session.Store(stream);
 
-            var (snapshot, projections) = RunSnapshotAndProjections(stream);
+            var snapshot = TakeSnapshot(stream);
             
-            StoreSnapshotAndProjections(session, snapshot, projections);
+            if (snapshot is not null)
+            {
+                session.Store(snapshot);
+            }
+            
             AppendToGlobalLog(session, events, stream.Id);
             
             session.SaveChanges();

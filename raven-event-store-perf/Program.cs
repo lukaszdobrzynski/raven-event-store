@@ -19,42 +19,35 @@ var testRunner = new TestRunner(new TestRunnerSettings { BaseEvents = baseEvents
 
 await testRunner.Run("Test-1", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 1_00);
 
 await testRunner.Run("Test-2", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 1_000);
 
 await testRunner.Run("Test-3", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 5_000);
 
 await testRunner.Run("Test-4", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 10_000);
 
 await testRunner.Run("Test-5", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 20_000);
 
 await testRunner.Run("Test-6", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 50_000); 
 
 await testRunner.Run("Test-7", options =>
 {
-    options.Projections.Add<UserProjection>();
     options.Snapshots.Add<User>();
 }, 100_000);

@@ -5,7 +5,6 @@ namespace Raven.EventStore;
 
 internal class EventStoreSettings
 {
-    public readonly HashSet<Type> Projections = [];
     public readonly HashSet<Type> Snapshots = [];
     public bool UseGlobalStreamLogging { get; set; }
 }

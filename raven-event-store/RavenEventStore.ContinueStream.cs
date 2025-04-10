@@ -10,38 +10,40 @@ public partial class RavenEventStore
 {
     public Task<TStream> ContinueStreamAsync<TStream>(string originStreamId, string derivedStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
     {
-        return ContinueStreamAsync<TStream>(originStreamId, derivedStreamId, events?.ToList());
+        return ContinueStreamAsync<TStream>(originStreamId, derivedStreamId, events?.ToList(), useOptimisticConcurrency:false);
+    }
+    
+    public Task<TStream> ContinueStreamAsyncOptimistically<TStream>(string originStreamId, string derivedStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
+    {
+        return ContinueStreamAsync<TStream>(originStreamId, derivedStreamId, events?.ToList(), useOptimisticConcurrency:true);
     }
     
     private async Task<TStream> ContinueStreamAsync<TStream>(string originStreamId,
-        string derivedStreamId, List<Event> events) where TStream : DocumentStream, new()
+        string derivedStreamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream, new()
     {
         CheckForNullOrEmptyEvents(events);
 
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            var originStream = await session.LoadAsync<TStream>(originStreamId);
-
-            if (originStream is null)
-                throw new NonExistentStreamException(originStreamId);
+            session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
             
+            var originStream = await session.LoadAsync<TStream>(originStreamId)
+                               ?? throw new NonExistentStreamException(originStreamId);
+
             AssignVersionToEvents(events, originStream.Position + 1);
             var originStreamSnapshot = TakeSnapshot(originStream);
-
-            originStream.ArchiveSnapshot = originStreamSnapshot;
+            originStream.ArchivedSnapshot = originStreamSnapshot;
             
             var derivedStream = new TStream
             {
                 Id = derivedStreamId,
                 CreatedAt = DateTime.UtcNow,
                 Events = events,
+                LogicalId = originStream.LogicalId,
                 SeedSnapshot = originStreamSnapshot
             };
 
-            originStream.ArchiveSnapshot = originStreamSnapshot;
-
             var derivedStreamSnapshot = TakeSnapshot(derivedStream);
-            derivedStreamSnapshot.Id = originStreamSnapshot.Id;
 
             await session.StoreAsync(originStream);
             await session.StoreAsync(derivedStream);
