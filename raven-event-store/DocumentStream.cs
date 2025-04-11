@@ -7,7 +7,8 @@ namespace Raven.EventStore;
 public abstract class DocumentStream
 {
     public string Id { get; set; }
-    public Guid LogicalId { get; init; }   
+    public Guid LogicalId { get; init; }
+    public string SnapshotId { get; set; }
     public List<Event> Events { get; set; } = [];
     public int Position => Events.Count != 0 ? Events.Last().Version : 0;
     public DateTime? UpdatedAt { get; set; }

@@ -74,6 +74,7 @@ public partial class RavenEventStore
             if (snapshot is not null)
             {
                 await session.StoreAsync(snapshot);
+                stream.SnapshotId = snapshot.Id;
             }
             
             await AppendToGlobalLogAsync(session, events, stream.Id);

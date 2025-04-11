@@ -66,6 +66,7 @@ public partial class RavenEventStore
             
             if (snapshot is not null)
             {
+                snapshot.Id = stream.SnapshotId;
                 await session.StoreAsync(snapshot);
             }
             
@@ -94,6 +95,7 @@ public partial class RavenEventStore
 
             if (snapshot is not null)
             {
+                snapshot.Id = stream.SnapshotId;
                 session.Store(snapshot);
             }
              

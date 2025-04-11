@@ -8,17 +8,18 @@ public partial class RavenEventStore
 {
     private Snapshot TakeSnapshot<TStream>(TStream stream) where TStream : DocumentStream
     {
-        var aggregateType = GetSnapshotType<TStream>();
-        if (aggregateType == null)
+        var snapshotType = GetSnapshotType<TStream>();
+        if (snapshotType == null)
             return null;
 
         var instance = stream.SeedSnapshot is not null
             ? (Snapshot)JsonConvert.DeserializeObject(
                 JsonConvert.SerializeObject(stream.SeedSnapshot),
-                aggregateType)
-            : (Snapshot)Activator.CreateInstance(aggregateType);
+                snapshotType)
+            : (Snapshot)Activator.CreateInstance(snapshotType);
 
         instance.TakeSnapshot(stream);
+        instance.StreamLogicalId = stream.LogicalId;
         return instance;
     }
 
