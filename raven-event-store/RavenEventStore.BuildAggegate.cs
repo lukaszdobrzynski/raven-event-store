@@ -19,7 +19,7 @@ public partial class RavenEventStore
             : (Aggregate)Activator.CreateInstance(aggregateType);
 
         instance.Build(stream);
-        instance.StreamLogicalId = stream.LogicalId;
+        instance.StreamKey = stream.StreamKey;
         return instance;
     }
 

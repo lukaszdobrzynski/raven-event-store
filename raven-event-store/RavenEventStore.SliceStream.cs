@@ -57,7 +57,7 @@ public partial class RavenEventStore
                 Id = newStreamId,
                 CreatedAt = DateTime.UtcNow,
                 Events = events,
-                LogicalId = sourceStream.LogicalId,
+                StreamKey = sourceStream.StreamKey,
                 AggregateId = sourceStream.AggregateId,
                 Seed = aggregate
             };
@@ -110,7 +110,7 @@ public partial class RavenEventStore
                 Id = newStreamId,
                 CreatedAt = DateTime.UtcNow,
                 Events = events,
-                LogicalId = sourceStream.LogicalId,
+                StreamKey = sourceStream.StreamKey,
                 AggregateId = sourceStream.AggregateId,
                 Seed = aggregate
             };

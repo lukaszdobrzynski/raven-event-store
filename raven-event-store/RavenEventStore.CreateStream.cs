@@ -62,7 +62,7 @@ public partial class RavenEventStore
             var stream = new TStream
             {
                 Id = streamId,
-                LogicalId = Guid.NewGuid(),
+                StreamKey = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
                 Events = events
             };
@@ -96,7 +96,7 @@ public partial class RavenEventStore
             var stream = new TStream
             {
                 Id = streamId,
-                LogicalId = Guid.NewGuid(),
+                StreamKey = Guid.NewGuid(),
                 CreatedAt = DateTime.UtcNow,
                 Events = events
             };
