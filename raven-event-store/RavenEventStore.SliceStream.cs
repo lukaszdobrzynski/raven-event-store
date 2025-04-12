@@ -39,7 +39,7 @@ public partial class RavenEventStore
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
 
-            var sourceStream = await session.Include<TStream>(x => x.SnapshotId)
+            var sourceStream = await session.Include<TStream>(x => x.AggregateId)
                 .LoadAsync(sourceStreamId);
 
             if (sourceStream is null)
@@ -49,8 +49,8 @@ public partial class RavenEventStore
             
             AssignVersionToEvents(events, sourceStream.Position + 1);
             
-            var snapshot = await session.LoadAsync<Snapshot>(sourceStream.SnapshotId);
-            sourceStream.ArchivedSnapshot = snapshot;
+            var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId);
+            sourceStream.Archive = aggregate;
             
             var newStream = new TStream
             {
@@ -58,19 +58,18 @@ public partial class RavenEventStore
                 CreatedAt = DateTime.UtcNow,
                 Events = events,
                 LogicalId = sourceStream.LogicalId,
-                SnapshotId = sourceStream.SnapshotId,
-                SeedSnapshot = snapshot
+                AggregateId = sourceStream.AggregateId,
+                Seed = aggregate
             };
 
-            var newSnapshot = TakeSnapshot(newStream);
+            var newAggregate = BuildAggregate(newStream);
 
-            if (snapshot is not null)
+            if (aggregate is not null)
             {
-                var changeVector = session.Advanced.GetChangeVectorFor(snapshot);
-                session.Advanced.Evict(snapshot);
-                newSnapshot.Id = snapshot.Id;
-                await session.StoreAsync(newSnapshot, changeVector, newSnapshot.Id);
-                session.Advanced.Evict(snapshot);
+                var changeVector = session.Advanced.GetChangeVectorFor(aggregate);
+                session.Advanced.Evict(aggregate);
+                aggregate.Id = aggregate.Id;
+                await session.StoreAsync(newAggregate, changeVector, newAggregate.Id);
             }
             
             await session.StoreAsync(sourceStream);
@@ -93,7 +92,7 @@ public partial class RavenEventStore
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
 
-            var sourceStream = session.Include<TStream>(x => x.SnapshotId)
+            var sourceStream = session.Include<TStream>(x => x.AggregateId)
                 .Load(sourceStreamId);
 
             if (sourceStream is null)
@@ -103,8 +102,8 @@ public partial class RavenEventStore
             
             AssignVersionToEvents(events, sourceStream.Position + 1);
             
-            var snapshot = session.Load<Snapshot>(sourceStream.SnapshotId);
-            sourceStream.ArchivedSnapshot = snapshot;
+            var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
+            sourceStream.Archive = aggregate;
             
             var newStream = new TStream
             {
@@ -112,19 +111,18 @@ public partial class RavenEventStore
                 CreatedAt = DateTime.UtcNow,
                 Events = events,
                 LogicalId = sourceStream.LogicalId,
-                SnapshotId = sourceStream.SnapshotId,
-                SeedSnapshot = snapshot
+                AggregateId = sourceStream.AggregateId,
+                Seed = aggregate
             };
 
-            var newSnapshot = TakeSnapshot(newStream);
+            var newAggregate = BuildAggregate(newStream);
 
-            if (snapshot is not null)
+            if (aggregate is not null)
             {
-                var changeVector = session.Advanced.GetChangeVectorFor(snapshot);
-                session.Advanced.Evict(snapshot);
-                newSnapshot.Id = snapshot.Id;
-                session.Store(newSnapshot, changeVector, newSnapshot.Id);
-                session.Advanced.Evict(snapshot);    
+                var changeVector = session.Advanced.GetChangeVectorFor(aggregate);
+                session.Advanced.Evict(aggregate);
+                newAggregate.Id = aggregate.Id;
+                session.Store(newAggregate, changeVector, newAggregate.Id);
             }
             
             session.Store(sourceStream);

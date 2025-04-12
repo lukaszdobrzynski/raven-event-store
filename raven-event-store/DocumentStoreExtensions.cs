@@ -16,7 +16,7 @@ public static class DocumentStoreExtensions
         var options = new RavenEventStoreConfigurationOptions();
         configure(options);
 
-        ConfigureSnapshots(options.Snapshots);
+        ConfigureAggregates(options.Aggregates);
         ConfigureGlobalStreamLogging(options.UseGlobalStreamLogging);
     }
     
@@ -32,11 +32,11 @@ public static class DocumentStoreExtensions
         return _eventStore;
     }
 
-    private static void ConfigureSnapshots(RavenEventStoreSnapshots snapshots)
+    private static void ConfigureAggregates(RavenEventStoreAggregates aggregates)
     {
-        foreach (var type in snapshots.Types)
+        foreach (var type in aggregates.Types)
         {
-            _eventStore.RegisterSnapshot(type);
+            _eventStore.RegisterAggregate(type);
         }
     }
     

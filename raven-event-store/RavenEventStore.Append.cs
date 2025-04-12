@@ -62,12 +62,12 @@ public partial class RavenEventStore
             stream.Events.AddRange(events);
             stream.UpdatedAt = DateTime.UtcNow;
 
-            var snapshot = TakeSnapshot(stream);
+            var aggregate = BuildAggregate(stream);
             
-            if (snapshot is not null)
+            if (aggregate is not null)
             {
-                snapshot.Id = stream.SnapshotId;
-                await session.StoreAsync(snapshot);
+                aggregate.Id = stream.AggregateId;
+                await session.StoreAsync(aggregate);
             }
             
             await AppendToGlobalLogAsync(session, events, stream.Id);
@@ -91,12 +91,12 @@ public partial class RavenEventStore
             stream.Events.AddRange(events);
             stream.UpdatedAt = DateTime.UtcNow;
 
-            var snapshot = TakeSnapshot(stream);
+            var aggregate = BuildAggregate(stream);
 
-            if (snapshot is not null)
+            if (aggregate is not null)
             {
-                snapshot.Id = stream.SnapshotId;
-                session.Store(snapshot);
+                aggregate.Id = stream.AggregateId;
+                session.Store(aggregate);
             }
              
             AppendToGlobalLog(session, events, streamId);

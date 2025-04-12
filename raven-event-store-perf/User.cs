@@ -3,7 +3,7 @@ using Raven.EventStore.Perf.Events;
 
 namespace Raven.EventStore.Perf;
 
-public class User : Snapshot<UserStream>
+public class User : Aggregate<UserStream>
 {
     public string Username { get; set; }
     public string Email { get; set; }
@@ -12,7 +12,7 @@ public class User : Snapshot<UserStream>
     public DateTime RegisteredAt { get; set; }
     public DateTime? VerifiedAt { get; set; }
     public DateTime? ActivationStatusChangedAt { get; set; }
-    protected override void TakeSnapshot(UserStream userStream)
+    protected override void Build(UserStream userStream)
     {
         var events = userStream.Events;
         

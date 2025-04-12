@@ -6,17 +6,17 @@ namespace Raven.EventStore;
 public class RavenEventStoreConfigurationOptions
 {
     internal RavenEventStoreConfigurationOptions() {}
-    public RavenEventStoreSnapshots Snapshots { get; } = new();
+    public RavenEventStoreAggregates Aggregates { get; } = new();
     public bool UseGlobalStreamLogging { get; set; }
 }
 
-public class RavenEventStoreSnapshots
+public class RavenEventStoreAggregates
 {
     internal List<Type> Types { get; } = [];
-    internal RavenEventStoreSnapshots() {}
+    internal RavenEventStoreAggregates() {}
 
-    public void Add<TSnapshot>() where TSnapshot : Snapshot
+    public void Add<TAggregate>() where TAggregate : Aggregate
     {
-        Types.Add(typeof(TSnapshot));
+        Types.Add(typeof(TAggregate));
     }
 }

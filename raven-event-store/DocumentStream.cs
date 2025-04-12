@@ -8,11 +8,11 @@ public abstract class DocumentStream
 {
     public string Id { get; set; }
     public Guid LogicalId { get; init; }
-    public string SnapshotId { get; set; }
+    public string AggregateId { get; set; }
     public List<Event> Events { get; set; } = [];
     public int Position => Events.Count != 0 ? Events.Last().Version : 0;
     public DateTime? UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
-    public Snapshot SeedSnapshot { get; set; }
-    public Snapshot ArchivedSnapshot { get; set; }
+    public Aggregate Seed { get; set; }
+    public Aggregate Archive { get; set; }
 }
