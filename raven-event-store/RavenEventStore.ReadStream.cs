@@ -1,4 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Raven.Client.Documents;
+using Raven.Client.Documents.Linq;
 
 namespace Raven.EventStore;
 
@@ -17,6 +21,48 @@ public partial class RavenEventStore
         using (var session = DocumentStore.OpenSession())
         {
             return session.Load<TStream>(streamId);    
+        }
+    }
+
+    public async Task<PagedResult<TStream>> ReadStreamAsync<TStream>(Guid streamKey, int pageNumber = 1, int pageSize = 100) where TStream : DocumentStream
+    {
+        using (var session = DocumentStore.OpenAsyncSession())
+        {
+            var skip = (pageNumber - 1) * pageSize;
+            
+            var result = await session.Query<TStream>()
+                .Where(x => x.StreamKey == streamKey)
+                .OrderBy(x => x.Position)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<TStream>()
+            {
+                Items = result,
+                Total = result.Count
+            };
+        }
+    }
+
+    public PagedResult<TStream> ReadStream<TStream>(Guid streamKey, int pageNumber = 1, int pageSize = 100) where TStream : DocumentStream
+    {
+        using (var session = DocumentStore.OpenSession())
+        {
+            var skip = (pageNumber - 1) * pageSize;
+            
+            var result = session.Query<TStream>()
+                .Where(x => x.StreamKey == streamKey)
+                .OrderBy(x => x.Position)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            return new PagedResult<TStream>()
+            {
+                Items = result,
+                Total = result.Count
+            };
         }
     }
 }

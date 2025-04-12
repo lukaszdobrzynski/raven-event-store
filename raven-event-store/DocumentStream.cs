@@ -7,7 +7,6 @@ namespace Raven.EventStore;
 public abstract class DocumentStream
 {
     public string Id { get; set; }
-    
     public Guid StreamKey { get; init; }
     public string AggregateId { get; set; }
     public List<Event> Events { get; set; } = [];
