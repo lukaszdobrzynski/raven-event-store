@@ -10,12 +10,12 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamId, int fromVersion)
+    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, int fromVersion)
         where TStream : DocumentStream
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId, e => e.Version >= fromVersion);
+            return await QueryStreamAsync<TStream>(session, streamKey, e => e.Version >= fromVersion);
         }
     }
     
@@ -28,12 +28,12 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamId, int fromVersion, int toVersion)
+    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, int fromVersion, int toVersion)
         where TStream : DocumentStream
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId, e => e.Version >= fromVersion && e.Version <= toVersion);
+            return await QueryStreamAsync<TStream>(session, streamKey, e => e.Version >= fromVersion && e.Version <= toVersion);
         }
     }
     
@@ -46,12 +46,12 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamId, DateTime fromDate)
+    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, DateTime fromDate)
         where TStream : DocumentStream
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId, e => e.Timestamp >= fromDate);
+            return await QueryStreamAsync<TStream>(session, streamKey, e => e.Timestamp >= fromDate);
         }
     }
     
@@ -64,12 +64,12 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamId, DateTime fromDate, DateTime toDate)
+    public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, DateTime fromDate, DateTime toDate)
         where TStream : DocumentStream
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId, e => e.Timestamp >= fromDate && e.Timestamp <= toDate);
+            return await QueryStreamAsync<TStream>(session, streamKey, e => e.Timestamp >= fromDate && e.Timestamp <= toDate);
         }
     }
     
@@ -82,13 +82,13 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream,TEvent>(Guid streamId) 
+    public async Task<List<Event>> QueryStreamAsync<TStream,TEvent>(Guid streamKey) 
         where TStream : DocumentStream
         where TEvent : Event
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId, e => e.Name == typeof(TEvent).Name);
+            return await QueryStreamAsync<TStream>(session, streamKey, e => e.Name == typeof(TEvent).Name);
         }
     }
     
@@ -102,13 +102,13 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamId, int fromVersion) 
+    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamKey, int fromVersion) 
         where TStream : DocumentStream
         where TEvent : Event
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId,
+            return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion);
         }
     }
@@ -123,13 +123,13 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamId, int fromVersion, int toVersion) 
+    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamKey, int fromVersion, int toVersion) 
         where TStream : DocumentStream
         where TEvent : Event
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId,
+            return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion && e.Version <= toVersion);
         }
     }
@@ -145,13 +145,13 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamId, DateTime fromDate) 
+    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamKey, DateTime fromDate) 
         where TStream : DocumentStream
         where TEvent : Event
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId,
+            return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate);
         }
     }
@@ -166,13 +166,13 @@ public partial class RavenEventStore
         }
     }
     
-    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamId, DateTime fromDate, DateTime toDate) 
+    public async Task<List<Event>> QueryStreamAsync<TStream, TEvent>(Guid streamKey, DateTime fromDate, DateTime toDate) 
         where TStream : DocumentStream
         where TEvent : Event
     {
         using (var session = DocumentStore.OpenAsyncSession())
         {
-            return await QueryStreamAsync<TStream>(session, streamId,
+            return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate && e.Timestamp <= toDate);
         }
     }
