@@ -17,8 +17,7 @@ public partial class RavenEventStore
         CheckForNonExistentStream(stream, streamId);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
-        stream.Events.AddRange(events);
-        stream.UpdatedAt = DateTime.UtcNow;
+        AddEventsToStream(stream, events);
 
         var aggregate = BuildAggregate(stream);
 
@@ -41,8 +40,7 @@ public partial class RavenEventStore
         CheckForNonExistentStream(stream, streamId);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
-        stream.Events.AddRange(events);
-        stream.UpdatedAt = DateTime.UtcNow;
+        AddEventsToStream(stream, events);
 
         var aggregate = BuildAggregate(stream);
 
@@ -53,5 +51,11 @@ public partial class RavenEventStore
         }
          
         await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events);
+    }
+
+    private static void AddEventsToStream<TStream>(TStream stream, List<Event> events) where TStream : DocumentStream
+    {
+        stream.Events.AddRange(events);
+        stream.UpdatedAt = DateTime.UtcNow;
     }
 }

@@ -14,13 +14,7 @@ public partial class RavenEventStore
             
         AssignVersionToEvents(events, nextVersion: 1);
             
-        var stream = new TStream
-        {
-            Id = streamId,
-            StreamKey = Guid.NewGuid(),
-            CreatedAt = DateTime.UtcNow,
-            Events = events
-        };
+        var stream = CreateStream<TStream>(streamId, events);
 
         await session.StoreAsync(stream);
 
@@ -43,13 +37,7 @@ public partial class RavenEventStore
             
         AssignVersionToEvents(events, nextVersion: 1);
             
-        var stream = new TStream
-        {
-            Id = streamId,
-            StreamKey = Guid.NewGuid(),
-            CreatedAt = DateTime.UtcNow,
-            Events = events
-        };
+        var stream = CreateStream<TStream>(streamId, events);
 
         session.Store(stream);
 
@@ -62,6 +50,19 @@ public partial class RavenEventStore
         }
             
         AppendToGlobalLog(session, stream.Id, stream.StreamKey, events);
+        return stream;
+    }
+
+    private static TStream CreateStream<TStream>(string streamId, List<Event> events) where TStream : DocumentStream, new()
+    {
+        var stream = new TStream
+        {
+            Id = streamId,
+            StreamKey = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            Events = events
+        };
+        
         return stream;
     }
 }

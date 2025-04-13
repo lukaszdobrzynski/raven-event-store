@@ -24,18 +24,9 @@ public partial class RavenEventStore
             
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId);
         sourceStream.Archive = aggregate;
-            
-        var newStream = new TStream
-        {
-            Id = newStreamId,
-            CreatedAt = DateTime.UtcNow,
-            Events = events,
-            StreamKey = sourceStream.StreamKey,
-            AggregateId = sourceStream.AggregateId,
-            Seed = aggregate
-        };
-
-        var newAggregate = BuildAggregate(newStream);
+        
+        var newStreamSlice = CreateNewStreamSlice<TStream>(newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, aggregate, events);
+        var newAggregate = BuildAggregate(newStreamSlice);
 
         if (aggregate is not null)
         {
@@ -45,10 +36,10 @@ public partial class RavenEventStore
         }
             
         await session.StoreAsync(sourceStream);
-        await session.StoreAsync(newStream);
+        await session.StoreAsync(newStreamSlice);
             
-        await AppendToGlobalLogAsync(session, newStream.Id, newStream.StreamKey, events);
-        return newStream;
+        await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
+        return newStreamSlice;
     }
     
     private TStream HandleSlice<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
@@ -68,17 +59,8 @@ public partial class RavenEventStore
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
         sourceStream.Archive = aggregate;
             
-        var newStream = new TStream
-        {
-            Id = newStreamId,
-            CreatedAt = DateTime.UtcNow,
-            Events = events,
-            StreamKey = sourceStream.StreamKey,
-            AggregateId = sourceStream.AggregateId,
-            Seed = aggregate
-        };
-
-        var newAggregate = BuildAggregate(newStream);
+        var newStreamSlice = CreateNewStreamSlice<TStream>(newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, aggregate, events);
+        var newAggregate = BuildAggregate(newStreamSlice);
 
         if (aggregate is not null)
         {
@@ -88,9 +70,24 @@ public partial class RavenEventStore
         }
             
         session.Store(sourceStream);
-        session.Store(newStream);
+        session.Store(newStreamSlice);
             
-        AppendToGlobalLog(session, newStream.Id, newStream.StreamKey, events);
+        AppendToGlobalLog(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
+        return newStreamSlice;
+    }
+
+    private static TStream CreateNewStreamSlice<TStream>(string newStreamId, Guid streamKey, string aggregateId, Aggregate seed, List<Event> events) where TStream : DocumentStream, new()
+    {
+        var newStream = new TStream
+        {
+            Id = newStreamId,
+            CreatedAt = DateTime.UtcNow,
+            Events = events,
+            StreamKey = streamKey,
+            AggregateId = aggregateId,
+            Seed = seed
+        };
+
         return newStream;
     }
 }
