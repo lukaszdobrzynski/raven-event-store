@@ -48,7 +48,7 @@ public partial class RavenEventStore
         await session.StoreAsync(sourceStream);
         await session.StoreAsync(newStream);
             
-        await AppendToGlobalLogAsync(session, events, newStream.Id);
+        await AppendToGlobalLogAsync(session, newStream.Id, newStream.StreamKey, events);
         return newStream;
     }
     
@@ -92,7 +92,7 @@ public partial class RavenEventStore
         session.Store(sourceStream);
         session.Store(newStream);
             
-        AppendToGlobalLog(session, events, newStream.Id);
+        AppendToGlobalLog(session, newStream.Id, newStream.StreamKey, events);
         return newStream;
     }
 }

@@ -7,17 +7,17 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private void HandleAppend<TStream>(IDocumentSession session, string streamId, List<Event> eventList)
+    private void HandleAppend<TStream>(IDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream
     {
-        CheckForNullOrEmptyEvents(eventList);
+        CheckForNullOrEmptyEvents(events);
 
         var stream = session.Load<TStream>(streamId);
 
         CheckForNonExistentStream(stream, streamId);
-        AssignVersionToEvents(eventList, nextVersion: stream.Position + 1);
+        AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
-        stream.Events.AddRange(eventList);
+        stream.Events.AddRange(events);
         stream.UpdatedAt = DateTime.UtcNow;
 
         var aggregate = BuildAggregate(stream);
@@ -28,20 +28,20 @@ public partial class RavenEventStore
             session.Store(aggregate);
         }
          
-        AppendToGlobalLog(session, eventList, streamId);
+        AppendToGlobalLog(session, streamId, stream.StreamKey, events);
     }
     
-    private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> eventList)
+    private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream
     {
-        CheckForNullOrEmptyEvents(eventList);
+        CheckForNullOrEmptyEvents(events);
 
         var stream = await session.LoadAsync<TStream>(streamId);
 
         CheckForNonExistentStream(stream, streamId);
-        AssignVersionToEvents(eventList, nextVersion: stream.Position + 1);
+        AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
-        stream.Events.AddRange(eventList);
+        stream.Events.AddRange(events);
         stream.UpdatedAt = DateTime.UtcNow;
 
         var aggregate = BuildAggregate(stream);
@@ -52,6 +52,6 @@ public partial class RavenEventStore
             await session.StoreAsync(aggregate);
         }
          
-        await AppendToGlobalLogAsync(session, eventList, streamId);
+        await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events);
     }
 }

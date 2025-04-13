@@ -77,7 +77,7 @@ public partial class RavenEventStore
                 stream.AggregateId = aggregate.Id;
             }
             
-            await AppendToGlobalLogAsync(session, events, stream.Id);
+            await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events);
             
             await session.SaveChangesAsync();
 
@@ -110,7 +110,7 @@ public partial class RavenEventStore
                 session.Store(aggregate);
             }
             
-            AppendToGlobalLog(session, events, stream.Id);
+            AppendToGlobalLog(session, stream.Id, stream.StreamKey, events);
             
             session.SaveChanges();
 

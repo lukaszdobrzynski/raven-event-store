@@ -15,6 +15,9 @@ public partial class RavenEventStore
     {
         DocumentStore = documentStore;
     }
+    
+    internal void SetUseGlobalStreamLogging(bool useGlobalStreamLLogging) =>
+        _settings.UseGlobalStreamLogging = useGlobalStreamLLogging;
 
     private static void AssignVersionToEvents(List<Event> events, int nextVersion)
     {
