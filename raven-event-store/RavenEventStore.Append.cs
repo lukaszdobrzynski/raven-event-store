@@ -1,107 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Raven.Client.Documents.Session;
 
 namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public async Task AppendAsync<TStream>(string streamId, List<Event> events) where TStream : DocumentStream
+    public async Task AppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events) where TStream : DocumentStream
     {
-        await AppendAsync<TStream>(streamId, events, useOptimisticConcurrency: false);
+        await HandleAppendAsync<TStream>(session, streamId, events);
     }
     
-    public void Append<TStream>(string streamId, List<Event> events) where TStream : DocumentStream
+    public void Append<TStream>(IDocumentSession session, string streamId, List<Event> events) where TStream : DocumentStream
     {
-        Append<TStream>(streamId, events, useOptimisticConcurrency: false);
+        HandleAppend<TStream>(session, streamId, events);
     }
     
-    public async Task AppendAsyncOptimistically<TStream>(string streamId, List<Event> events) where TStream : DocumentStream
+    public async Task AppendAsync<TStream>(IAsyncDocumentSession session, string streamId, params Event[] events) where TStream : DocumentStream
     {
-        await AppendAsync<TStream>(streamId, events, useOptimisticConcurrency: true);
+        await HandleAppendAsync<TStream>(session, streamId, events?.ToList());
     }
     
-    public void AppendOptimistically<TStream>(string streamId, List<Event> events) where TStream : DocumentStream
+    public void Append<TStream>(IDocumentSession session, string streamId, params Event[] events) where TStream : DocumentStream
     {
-        Append<TStream>(streamId, events, useOptimisticConcurrency: true);
-    }
-    
-    public async Task AppendAsync<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
-    {
-        await AppendAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
-    }
-    
-    public void Append<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
-    {
-        Append<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
-    }
-    
-    public async Task AppendAsyncOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
-    {
-        await AppendAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
-    }
-    
-    public void AppendOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
-    {
-        Append<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
-    }
-    
-    private async Task AppendAsync<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream
-    {
-        CheckForNullOrEmptyEvents(events);
-
-        using (var session = DocumentStore.OpenAsyncSession())
-        {
-            session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
-            var stream = await session.LoadAsync<TStream>(streamId);
-
-            CheckForNonExistentStream(stream, streamId);
-            AssignVersionToEvents(events, nextVersion: stream.Position + 1);
-            
-            stream.Events.AddRange(events);
-            stream.UpdatedAt = DateTime.UtcNow;
-
-            var aggregate = BuildAggregate(stream);
-            
-            if (aggregate is not null)
-            {
-                aggregate.Id = stream.AggregateId;
-                await session.StoreAsync(aggregate);
-            }
-            
-            await AppendToGlobalLogAsync(session, events, stream.Id);
-            
-            await session.SaveChangesAsync();
-        }
-    }
-    
-    private void Append<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream
-    {
-        CheckForNullOrEmptyEvents(events);
-
-        using (var session = DocumentStore.OpenSession())
-        {
-            session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
-            var stream = session.Load<TStream>(streamId);
-
-            CheckForNonExistentStream(stream, streamId);
-            AssignVersionToEvents(events, nextVersion: stream.Position + 1);
-            
-            stream.Events.AddRange(events);
-            stream.UpdatedAt = DateTime.UtcNow;
-
-            var aggregate = BuildAggregate(stream);
-
-            if (aggregate is not null)
-            {
-                aggregate.Id = stream.AggregateId;
-                session.Store(aggregate);
-            }
-             
-            AppendToGlobalLog(session, events, streamId);
-            
-            session.SaveChanges();
-        }
+        HandleAppend<TStream>(session, streamId, events?.ToList());
     }
 }
