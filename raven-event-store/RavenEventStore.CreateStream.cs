@@ -1,120 +1,53 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Raven.Client.Documents.Session;
 
 namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public Task<TStream> CreateStreamAsync<TStream>(IEnumerable<Event> events) where TStream : DocumentStream, new()
+    public Task<TStream> CreateStreamAsync<TStream>(IAsyncDocumentSession session, IEnumerable<Event> events) where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStreamAsync<TStream>(null, events?.ToList());
+        return HandleCreateAsync<TStream>(session, null, events?.ToList());
     }
     
-    public TStream CreateStream<TStream>(IEnumerable<Event> events) where TStream : DocumentStream, new()
+    public TStream CreateStream<TStream>(IDocumentSession session, IEnumerable<Event> events) where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStream<TStream>(null, events?.ToList());
+        return HandleCreate<TStream>(session, null, events?.ToList());
     }
 
-    public Task<TStream> CreateStreamAsync<TStream>(string streamId, IEnumerable<Event> events)
+    public Task<TStream> CreateStreamAsync<TStream>(IAsyncDocumentSession session, string streamId, IEnumerable<Event> events)
         where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStreamAsync<TStream>(streamId, events?.ToList());
+        return HandleCreateAsync<TStream>(session, streamId, events?.ToList());
     }
     
-    public TStream CreateStream<TStream>(string streamId, IEnumerable<Event> events)
+    public TStream CreateStream<TStream>(IDocumentSession session, string streamId, IEnumerable<Event> events)
         where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStream<TStream>(streamId, events?.ToList());
+        return HandleCreate<TStream>(session, streamId, events?.ToList());
     }
     
-    public Task<TStream> CreateStreamAsync<TStream>(params Event[] events) where TStream : DocumentStream, new()
+    public Task<TStream> CreateStreamAsync<TStream>(IAsyncDocumentSession session, params Event[] events) where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStreamAsync<TStream>(null, events?.ToList());
+        return HandleCreateAsync<TStream>(session, null, events?.ToList());
     }
     
-    public TStream CreateStream<TStream>(params Event[] events) where TStream : DocumentStream, new()
+    public TStream CreateStream<TStream>(IDocumentSession session, params Event[] events) where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStream<TStream>(null, events?.ToList());
+        return HandleCreate<TStream>(session, null, events?.ToList());
     }
     
-    public Task<TStream> CreateStreamAsync<TStream>(string streamId, params Event[] events)
+    public Task<TStream> CreateStreamAsync<TStream>(IAsyncDocumentSession session, string streamId, params Event[] events)
         where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStreamAsync<TStream>(streamId, events?.ToList());
+        return HandleCreateAsync<TStream>(session, streamId, events?.ToList());
     }
     
-    public TStream CreateStream<TStream>(string streamId, params Event[] events)
+    public TStream CreateStream<TStream>(IDocumentSession session, string streamId, params Event[] events)
         where TStream : DocumentStream, new()
     {
-        return CreateAndPersistStream<TStream>(streamId, events?.ToList());
-    }
-    
-    private async Task<TStream> CreateAndPersistStreamAsync<TStream>(string streamId, List<Event> events) where TStream : DocumentStream, new()
-    {
-        CheckForNullOrEmptyEvents(events);
-        
-        using (var session = DocumentStore.OpenAsyncSession())
-        {
-            AssignVersionToEvents(events, nextVersion: 1);
-            
-            var stream = new TStream
-            {
-                Id = streamId,
-                StreamKey = Guid.NewGuid(),
-                CreatedAt = DateTime.UtcNow,
-                Events = events
-            };
-
-            await session.StoreAsync(stream);
-
-            var aggregate = BuildAggregate(stream);
-
-            if (aggregate is not null)
-            {
-                await session.StoreAsync(aggregate);
-                stream.AggregateId = aggregate.Id;
-            }
-            
-            await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events);
-            
-            await session.SaveChangesAsync();
-
-            return stream;
-        }
-    }
-    
-    private TStream CreateAndPersistStream<TStream>(string streamId, List<Event> events) where TStream : DocumentStream, new()
-    {
-        CheckForNullOrEmptyEvents(events);
-        
-        using (var session = DocumentStore.OpenSession())
-        {
-            AssignVersionToEvents(events, nextVersion: 1);
-            
-            var stream = new TStream
-            {
-                Id = streamId,
-                StreamKey = Guid.NewGuid(),
-                CreatedAt = DateTime.UtcNow,
-                Events = events
-            };
-
-            session.Store(stream);
-
-            var aggregate = BuildAggregate(stream);
-            
-            if (aggregate is not null)
-            {
-                session.Store(aggregate);
-            }
-            
-            AppendToGlobalLog(session, stream.Id, stream.StreamKey, events);
-            
-            session.SaveChanges();
-
-            return stream;
-        }
+        return HandleCreate<TStream>(session, streamId, events?.ToList());
     }
 }
