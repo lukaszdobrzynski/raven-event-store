@@ -41,8 +41,7 @@ public partial class RavenEventStore
         {
             var changeVector = session.Advanced.GetChangeVectorFor(aggregate);
             session.Advanced.Evict(aggregate);
-            aggregate.Id = aggregate.Id;
-            await session.StoreAsync(newAggregate, changeVector, newAggregate.Id);
+            await session.StoreAsync(newAggregate, changeVector, aggregate.Id);
         }
             
         await session.StoreAsync(sourceStream);
@@ -85,8 +84,7 @@ public partial class RavenEventStore
         {
             var changeVector = session.Advanced.GetChangeVectorFor(aggregate);
             session.Advanced.Evict(aggregate);
-            aggregate.Id = aggregate.Id;
-            session.Store(newAggregate, changeVector, newAggregate.Id);
+            session.Store(newAggregate, changeVector, aggregate.Id);
         }
             
         session.Store(sourceStream);
