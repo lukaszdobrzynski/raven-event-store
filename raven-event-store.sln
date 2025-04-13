@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "raven-event-store", "raven-event-store\raven-event-store.csproj", "{35C03CD0-44DE-4C26-965F-CD6AA576D642}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "raven-event-store-perf", "raven-event-store-perf\raven-event-store-perf.csproj", "{6E65A4E6-2073-44D9-96F0-932861198612}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,9 +12,5 @@ Global
 		{35C03CD0-44DE-4C26-965F-CD6AA576D642}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35C03CD0-44DE-4C26-965F-CD6AA576D642}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35C03CD0-44DE-4C26-965F-CD6AA576D642}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6E65A4E6-2073-44D9-96F0-932861198612}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E65A4E6-2073-44D9-96F0-932861198612}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E65A4E6-2073-44D9-96F0-932861198612}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E65A4E6-2073-44D9-96F0-932861198612}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
