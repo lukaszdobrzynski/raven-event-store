@@ -52,7 +52,7 @@ public partial class RavenEventStore
     
     private async Task<TStream> CreateStreamAndStoreAsync<TStream>(string streamId, List<Event> events) where TStream : DocumentStream, new()
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             var stream = await HandleCreateAsync<TStream>(session, streamId, events);
             await session.SaveChangesAsync();
@@ -62,7 +62,7 @@ public partial class RavenEventStore
     
     private TStream CreateStreamAndStore<TStream>(string streamId, List<Event> events) where TStream : DocumentStream, new()
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             var stream = HandleCreate<TStream>(session, streamId, events);
             session.SaveChanges();

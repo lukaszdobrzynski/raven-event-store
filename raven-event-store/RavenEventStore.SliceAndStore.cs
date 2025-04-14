@@ -31,7 +31,7 @@ public partial class RavenEventStore
     private async Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId,
         string newStreamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream, new()
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
             var newStream = await HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events);
@@ -44,7 +44,7 @@ public partial class RavenEventStore
     private TStream SliceStreamAndStore<TStream>(string sourceStreamId,
         string newStreamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream, new()
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
             var newStream = HandleSlice<TStream>(session, sourceStreamId, newStreamId, events);

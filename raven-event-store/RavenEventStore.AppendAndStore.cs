@@ -50,7 +50,7 @@ public partial class RavenEventStore
     {
         CheckForNullOrEmptyEvents(events);
 
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
             await HandleAppendAsync<TStream>(session, streamId, events);
@@ -62,7 +62,7 @@ public partial class RavenEventStore
     {
         CheckForNullOrEmptyEvents(events);
 
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
             HandleAppend<TStream>(session, streamId, events);

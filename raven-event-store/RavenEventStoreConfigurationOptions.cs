@@ -8,6 +8,7 @@ public class RavenEventStoreConfigurationOptions
     internal RavenEventStoreConfigurationOptions() {}
     public RavenEventStoreAggregates Aggregates { get; } = new();
     public bool UseGlobalStreamLogging { get; set; }
+    public string DatabaseName { get; set; }
 }
 
 public class RavenEventStoreAggregates

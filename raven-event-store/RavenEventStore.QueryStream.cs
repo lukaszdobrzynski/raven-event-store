@@ -13,7 +13,7 @@ public partial class RavenEventStore
     public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, int fromVersion)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey, e => e.Version >= fromVersion);
         }
@@ -22,7 +22,7 @@ public partial class RavenEventStore
     public List<Event> QueryStream<TStream>(Guid streamKey, int fromVersion)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Version >= fromVersion);
         }
@@ -31,7 +31,7 @@ public partial class RavenEventStore
     public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, int fromVersion, int toVersion)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey, e => e.Version >= fromVersion && e.Version <= toVersion);
         }
@@ -40,7 +40,7 @@ public partial class RavenEventStore
     public List<Event> QueryStream<TStream>(Guid streamKey, int fromVersion, int toVersion)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Version >= fromVersion && e.Version <= toVersion);
         }
@@ -49,7 +49,7 @@ public partial class RavenEventStore
     public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, DateTime fromDate)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey, e => e.Timestamp >= fromDate);
         }
@@ -58,7 +58,7 @@ public partial class RavenEventStore
     public List<Event> QueryStream<TStream>(Guid streamKey, DateTime fromDate)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Timestamp >= fromDate);
         }
@@ -67,7 +67,7 @@ public partial class RavenEventStore
     public async Task<List<Event>> QueryStreamAsync<TStream>(Guid streamKey, DateTime fromDate, DateTime toDate)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey, e => e.Timestamp >= fromDate && e.Timestamp <= toDate);
         }
@@ -76,7 +76,7 @@ public partial class RavenEventStore
     public List<Event> QueryStream<TStream>(Guid streamKey, DateTime fromDate, DateTime toDate)
         where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Timestamp >= fromDate && e.Timestamp <= toDate);
         }
@@ -86,7 +86,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey, e => e.Name == typeof(TEvent).Name);
         }
@@ -96,7 +96,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Name == typeof(TEvent).Name);
         }
@@ -106,7 +106,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion);
@@ -117,7 +117,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion);
         }
@@ -127,7 +127,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion && e.Version <= toVersion);
@@ -138,7 +138,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Version >= fromVersion && e.Version <= toVersion);
@@ -149,7 +149,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate);
@@ -160,7 +160,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate);
         }
@@ -170,7 +170,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryStreamAsync<TStream>(session, streamKey,
                 e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate && e.Timestamp <= toDate);
@@ -181,7 +181,7 @@ public partial class RavenEventStore
         where TStream : DocumentStream
         where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryStream<TStream>(session, streamKey, 
                 e => e.Name == typeof(TEvent).Name && e.Timestamp >= fromDate && e.Timestamp <= toDate);

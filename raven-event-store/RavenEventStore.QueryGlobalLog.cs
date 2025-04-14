@@ -13,7 +13,7 @@ public partial class RavenEventStore
 {
     public async Task<List<GlobalEventLog>> QueryGlobalLogAsync<TEvent>() where TEvent : Event
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryGlobalLogAsync(session, x => x.Event.Name == typeof(TEvent).Name);
         }
@@ -21,7 +21,7 @@ public partial class RavenEventStore
     
     public List<GlobalEventLog> QueryGlobalLog<TEvent>() where TEvent : Event
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryGlobalLog(session, x => x.Event.Name == typeof(TEvent).Name);
         }
@@ -29,7 +29,7 @@ public partial class RavenEventStore
     
     public async Task<List<GlobalEventLog>> QueryGlobalLogAsync(DateTime fromDate)
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryGlobalLogAsync(session, x => x.Event.Timestamp >= fromDate);
         }
@@ -37,7 +37,7 @@ public partial class RavenEventStore
     
     public List<GlobalEventLog> QueryGlobalLog(DateTime fromDate)
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryGlobalLog(session, x => x.Event.Timestamp >= fromDate);
         }
@@ -45,7 +45,7 @@ public partial class RavenEventStore
     
     public async Task<List<GlobalEventLog>> QueryGlobalLogAsync(DateTime fromDate, DateTime toDate)
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await QueryGlobalLogAsync(session, x => x.Event.Timestamp >= fromDate && x.Event.Timestamp <= toDate);
         }
@@ -53,7 +53,7 @@ public partial class RavenEventStore
     
     public List<GlobalEventLog> QueryGlobalLog(DateTime fromDate, DateTime toDate)
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return QueryGlobalLog(session, x => x.Event.Timestamp >= fromDate && x.Event.Timestamp <= toDate);
         }

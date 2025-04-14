@@ -18,6 +18,9 @@ public static class DocumentStoreExtensions
 
         ConfigureAggregates(options.Aggregates);
         ConfigureGlobalStreamLogging(options.UseGlobalStreamLogging);
+        
+        var databaseName = options.DatabaseName ?? documentStore.Database;
+        ConfigureDatabaseName(databaseName);
     }
     
     public static void ConfigureEventStore(this IDocumentStore documentStore)
@@ -41,4 +44,5 @@ public static class DocumentStoreExtensions
     }
     
     private static void ConfigureGlobalStreamLogging(bool use) => _eventStore.SetUseGlobalStreamLogging(use);
+    private static void ConfigureDatabaseName(string databaseName) => _eventStore.SetDatabaseName(databaseName);
 }

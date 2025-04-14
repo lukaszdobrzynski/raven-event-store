@@ -10,7 +10,7 @@ public partial class RavenEventStore
 {
     public async Task<TStream> ReadStreamAsync<TStream>(string streamId) where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             return await session.LoadAsync<TStream>(streamId);    
         }
@@ -18,7 +18,7 @@ public partial class RavenEventStore
     
     public TStream ReadStream<TStream>(string streamId) where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             return session.Load<TStream>(streamId);    
         }
@@ -26,7 +26,7 @@ public partial class RavenEventStore
 
     public async Task<PagedResult<TStream>> ReadStreamAsync<TStream>(Guid streamKey, int pageNumber = 1, int pageSize = 100) where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        using (var session = OpenAsyncSession())
         {
             var skip = (pageNumber - 1) * pageSize;
             
@@ -47,7 +47,7 @@ public partial class RavenEventStore
 
     public PagedResult<TStream> ReadStream<TStream>(Guid streamKey, int pageNumber = 1, int pageSize = 100) where TStream : DocumentStream
     {
-        using (var session = DocumentStore.OpenSession())
+        using (var session = OpenSession())
         {
             var skip = (pageNumber - 1) * pageSize;
             
