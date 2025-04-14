@@ -9,6 +9,7 @@ public class RavenEventStoreConfigurationOptions
     public RavenEventStoreAggregates Aggregates { get; } = new();
     public bool UseGlobalStreamLogging { get; set; }
     public string DatabaseName { get; set; }
+    public string Name { get; set; }
 }
 
 public class RavenEventStoreAggregates
@@ -19,5 +20,10 @@ public class RavenEventStoreAggregates
     public void Add<TAggregate>() where TAggregate : Aggregate
     {
         Types.Add(typeof(TAggregate));
+    }
+
+    public void Add<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate 
+    {
+        Types.Add(aggregate.GetType());
     }
 }
