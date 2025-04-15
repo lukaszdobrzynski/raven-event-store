@@ -14,16 +14,26 @@ public class RavenEventStoreConfigurationOptions
 
 public class RavenEventStoreAggregates
 {
+    internal RavenEventStoreAggregateRegistry Registry { get; set; }
+
+    internal RavenEventStoreAggregates()
+    {
+        Registry = new RavenEventStoreAggregateRegistry();
+    }
+
+    public void Register(Action<RavenEventStoreAggregateRegistry> aggregateRegistry)
+    {
+        aggregateRegistry?.Invoke(Registry);
+    }
+}
+
+public class RavenEventStoreAggregateRegistry
+{
     internal List<Type> Types { get; } = [];
-    internal RavenEventStoreAggregates() {}
+    internal RavenEventStoreAggregateRegistry() {}
 
     public void Add<TAggregate>() where TAggregate : Aggregate
     {
         Types.Add(typeof(TAggregate));
-    }
-
-    public void Add<TAggregate>(TAggregate aggregate) where TAggregate : Aggregate 
-    {
-        Types.Add(aggregate.GetType());
     }
 }

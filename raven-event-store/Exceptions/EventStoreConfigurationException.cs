@@ -2,7 +2,7 @@
 
 namespace Raven.EventStore.Exceptions;
 
-internal class EventStoreConfigurationException : Exception
+public class EventStoreConfigurationException : Exception
 {
     public EventStoreConfigurationException(string message) : base(message)
     {

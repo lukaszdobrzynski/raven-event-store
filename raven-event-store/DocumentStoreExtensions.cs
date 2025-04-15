@@ -22,7 +22,7 @@ public static class DocumentStoreExtensions
         if (EventStores.TryGetValue(options.Name, out _))
             throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the {nameof(RavenEventStoreConfigurationOptions.Name)} {options.Name} has already been added.");
                 
-        var eventStore = new RavenEventStore(documentStore);
+        var eventStore = new RavenEventStore(documentStore, options.Name);
         EventStores.Add(options.Name, eventStore);
         
         ConfigureAggregates(options.Name, options.Aggregates);
@@ -42,7 +42,7 @@ public static class DocumentStoreExtensions
 
     private static void ConfigureAggregates(string storeName, RavenEventStoreAggregates aggregates)
     {
-        foreach (var type in aggregates.Types)
+        foreach (var type in aggregates.Registry.Types)
         {
             var eventStore = EventStores[storeName];
             eventStore.RegisterAggregate(type);
@@ -57,6 +57,15 @@ public static class DocumentStoreExtensions
 
     private static void ConfigureDatabaseName(string storeName, string databaseName)
     {
+        foreach (var store in EventStores.Values)
+        {
+            if (store.Settings.DatabaseName == databaseName)
+            {
+                throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the database name {databaseName} has already been configured. " +
+                                                           $"You cannot configure another event store accessing the same database.");
+            }
+        }
+        
         var eventStore = EventStores[storeName];
         eventStore.SetDatabaseName(databaseName);
     }

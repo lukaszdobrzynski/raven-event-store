@@ -9,7 +9,7 @@ public partial class RavenEventStore
 {
     private async Task AppendToGlobalLogAsync(IAsyncDocumentSession session, string streamId, Guid streamKey, List<Event> events)
     {
-        if (_settings.UseGlobalStreamLogging)
+        if (Settings.UseGlobalStreamLogging)
         {
             foreach (var @event in events)
             {
@@ -21,7 +21,7 @@ public partial class RavenEventStore
     
     private void AppendToGlobalLog(IDocumentSession session, string streamId, Guid streamKey, List<Event> events)
     {
-        if (_settings.UseGlobalStreamLogging)
+        if (Settings.UseGlobalStreamLogging)
         {
             foreach (var @event in events)
             {

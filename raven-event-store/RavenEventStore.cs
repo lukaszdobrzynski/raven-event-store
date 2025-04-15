@@ -7,23 +7,25 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private readonly EventStoreSettings _settings = new();
+    internal readonly EventStoreSettings Settings = new();
     private static readonly IdGenerator GlobalEventLogSequentialIdGenerator = new (0);
-    
+    public string Name { get; }
+
     private IDocumentStore DocumentStore { get; }
 
-    internal RavenEventStore(IDocumentStore documentStore)
+    internal RavenEventStore(IDocumentStore documentStore, string name)
     {
         DocumentStore = documentStore;
+        Name = name;
     }
     
-    private IAsyncDocumentSession OpenAsyncSession() => DocumentStore.OpenAsyncSession(_settings.DatabaseName);
-    private IDocumentSession OpenSession() => DocumentStore.OpenSession(_settings.DatabaseName);
+    private IAsyncDocumentSession OpenAsyncSession() => DocumentStore.OpenAsyncSession(Settings.DatabaseName);
+    private IDocumentSession OpenSession() => DocumentStore.OpenSession(Settings.DatabaseName);
     
     internal void SetUseGlobalStreamLogging(bool useGlobalStreamLLogging) =>
-        _settings.UseGlobalStreamLogging = useGlobalStreamLLogging;
+        Settings.UseGlobalStreamLogging = useGlobalStreamLLogging;
 
-    internal void SetDatabaseName(string databaseName) => _settings.DatabaseName = databaseName;
+    internal void SetDatabaseName(string databaseName) => Settings.DatabaseName = databaseName;
     
     private static void AssignVersionToEvents(List<Event> events, int nextVersion)
     {

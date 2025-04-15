@@ -11,3 +11,4 @@ bld/
 [Ll]og/
 
 .idea/
+*.DotSettings.user

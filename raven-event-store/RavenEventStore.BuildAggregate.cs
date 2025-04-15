@@ -26,6 +26,6 @@ public partial class RavenEventStore
     private Type GetAggregateType<TStream>() where TStream : DocumentStream
     {
         var aggregateType = typeof(Aggregate<>).MakeGenericType(typeof(TStream));
-        return _settings.Aggregates.SingleOrDefault(x => x.IsSubclassOf(aggregateType));
+        return Settings.Aggregates.SingleOrDefault(x => x.IsSubclassOf(aggregateType));
     }
 }
