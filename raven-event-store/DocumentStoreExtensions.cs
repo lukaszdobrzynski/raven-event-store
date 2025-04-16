@@ -59,7 +59,7 @@ public static class DocumentStoreExtensions
     {
         foreach (var store in EventStores.Values)
         {
-            if (store.Settings.DatabaseName == databaseName)
+            if (store.DatabaseName == databaseName)
             {
                 throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the database name {databaseName} has already been configured. " +
                                                            $"You cannot configure another event store accessing the same database.");
