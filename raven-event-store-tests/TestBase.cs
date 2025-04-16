@@ -71,9 +71,25 @@ public abstract class TestBase
     
     protected static string CreateEventStoreNameUnique() => Guid.NewGuid().ToString();
 
-    protected async Task<T> LoadAsync<T>(string id)
+    protected async Task<string> CreateSemanticId<T>(string databaseName, string idSuffix = null)
     {
-        using (var session = DocumentStore.OpenAsyncSession())
+        var instance = Activator.CreateInstance<T>();
+        var id = await DocumentStore.HiLoIdGenerator.GenerateDocumentIdAsync(databaseName, instance);
+        return idSuffix == null ? id : $"{id}/{idSuffix}";
+    }
+
+    protected RavenEventStoreBuilder InitEventStoreBuilder()
+    {
+        var name = CreateEventStoreNameUnique();
+        var builder = RavenEventStoreBuilder.Init(DocumentStore)
+            .WithName(name);
+        
+        return builder;
+    }
+
+    protected async Task<T> LoadAsync<T>(string dbName, string id)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
         {
             var document = await session.LoadAsync<T>(id);
             return document;

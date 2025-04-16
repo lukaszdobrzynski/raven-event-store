@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
 
@@ -35,5 +36,17 @@ public class RavenEventStoreAggregateRegistry
     public void Add<TAggregate>() where TAggregate : Aggregate
     {
         Types.Add(typeof(TAggregate));
+    }
+
+    public void Add(Type aggregate)
+    {
+        ArgumentNullException.ThrowIfNull(aggregate);
+        
+        if (typeof(Aggregate).IsAssignableFrom(aggregate) == false)
+        {
+            throw new EventStoreConfigurationException($"Type {aggregate.Name} is not a valid aggregate. It must inherit from {nameof(Aggregate)}.");
+        }
+        
+        Types.Add(aggregate);
     }
 }
