@@ -1,4 +1,5 @@
-﻿using Raven.EventStore.Tests.Events;
+﻿using System;
+using Raven.EventStore.Tests.Events;
 using Raven.EventStore.Tests.Streams;
 
 namespace Raven.EventStore.Tests.Aggregates;
@@ -34,6 +35,8 @@ public class User : Aggregate<UserStream>
                 case UserDeactivatedEvent e:
                     Apply(e);
                     break;
+                default:
+                    throw new ArgumentException($"Unknown event type: {@event.GetType().Name}");
             }
         }
     }

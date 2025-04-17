@@ -6,14 +6,15 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private static void CheckForNullOrEmptyEvents(List<Event> events)
+    private static void CheckForNullEvents(List<Event> events)
     {
-        ArgumentNullException.ThrowIfNull(events);
+        if (events is null) 
+            throw new ArgumentException("Events cannot be null.");
 
         var nullIndex = events.FindIndex(e => e is null);
         
         if (nullIndex != -1)
-            throw new ArgumentException($"Null event found at index {nullIndex}.");
+            throw new ArgumentException($" Null event found at index {nullIndex}.");
     }
 
     private static void CheckForNonExistentStream<TStream>(TStream stream, string streamId) where TStream : DocumentStream

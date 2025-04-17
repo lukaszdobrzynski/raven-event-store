@@ -10,7 +10,7 @@ public partial class RavenEventStore
 {
     private async Task<TStream> HandleSliceAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
     {
-        CheckForNullOrEmptyEvents(events);
+        CheckForNullEvents(events);
             
         var sourceStream = await session.Include<TStream>(x => x.AggregateId)
             .LoadAsync(sourceStreamId);
@@ -44,7 +44,7 @@ public partial class RavenEventStore
     
     private TStream HandleSlice<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
     {
-        CheckForNullOrEmptyEvents(events);
+        CheckForNullEvents(events);
             
         var sourceStream = session.Include<TStream>(x => x.AggregateId)
             .Load(sourceStreamId);

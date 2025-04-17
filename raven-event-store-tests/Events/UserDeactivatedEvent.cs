@@ -7,13 +7,10 @@ public class UserDeactivatedEvent : Event
     public override string Name => nameof(UserDeactivatedEvent);
     public string Status { get; init; }
 
-    public static UserDeactivatedEvent Create()
+    public static UserDeactivatedEvent Create => new ()
     {
-        return new UserDeactivatedEvent
-        {
-            Status = "DEACTIVATED",
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTime.UtcNow,
-        };
-    }
+        Status = "DEACTIVATED", 
+        EventId = Guid.NewGuid(), 
+        Timestamp = DateTime.UtcNow
+    };
 }

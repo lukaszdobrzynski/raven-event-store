@@ -7,13 +7,10 @@ public class UserVerifiedEvent : Event
     public override string Name => nameof(UserVerifiedEvent);
     public string Status { get; init; }
 
-    public static UserVerifiedEvent Create()
+    public static UserVerifiedEvent Create => new ()
     {
-        return new UserVerifiedEvent
-        {
-            Status = "VERIFIED",
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTime.UtcNow,
-        };
-    }
+        Status = "VERIFIED", 
+        EventId = Guid.NewGuid(), 
+        Timestamp = DateTime.UtcNow
+    };
 }

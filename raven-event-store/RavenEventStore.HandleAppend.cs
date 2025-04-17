@@ -10,7 +10,7 @@ public partial class RavenEventStore
     private void HandleAppend<TStream>(IDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream
     {
-        CheckForNullOrEmptyEvents(events);
+        CheckForNullEvents(events);
 
         var stream = session.Load<TStream>(streamId);
 
@@ -33,7 +33,7 @@ public partial class RavenEventStore
     private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream
     {
-        CheckForNullOrEmptyEvents(events);
+        CheckForNullEvents(events);
 
         var stream = await session.LoadAsync<TStream>(streamId);
 

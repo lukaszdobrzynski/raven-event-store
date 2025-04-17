@@ -95,4 +95,22 @@ public abstract class TestBase
             return document;
         }
     }
+
+    protected async Task<T> LoadSingleAsync<T>(string dbName)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            var document = await session.Query<T>().SingleAsync();
+            return document;
+        }
+    }
+
+    protected async Task<List<T>> LoadAllAsync<T>(string dbName)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            var documents = await session.Query<T>().ToListAsync();
+            return documents;
+        }
+    }
 }

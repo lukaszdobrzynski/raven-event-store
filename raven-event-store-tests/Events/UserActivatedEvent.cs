@@ -7,13 +7,10 @@ public class UserActivatedEvent : Event
     public override string Name => nameof(UserActivatedEvent);
     public string Status { get; init; }
     
-    public static UserActivatedEvent Create()
+    public static UserActivatedEvent Create => new()
     {
-        return new UserActivatedEvent
-        {
-            Status = "ACTIVATED",
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTime.UtcNow,
-        };
-    }
+        Status = "ACTIVATED", 
+        EventId = Guid.NewGuid(), 
+        Timestamp = DateTime.UtcNow
+    };
 }
