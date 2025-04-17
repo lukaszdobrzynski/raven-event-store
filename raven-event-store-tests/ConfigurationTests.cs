@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using Raven.EventStore.Exceptions;
+using Raven.EventStore.Tests.Aggregates;
 
 namespace Raven.EventStore.Tests;
 

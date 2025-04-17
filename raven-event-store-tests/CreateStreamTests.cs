@@ -1,11 +1,12 @@
 ﻿using System.Threading.Tasks;
+using Raven.EventStore.Tests.Streams;
 
 namespace Raven.EventStore.Tests;
 
 public class CreateStreamTests : TestBase
 {
     [Test]
-    public async Task CreatesStream_WithNoAggregate()
+    public async Task CreatesStream_NoEvents_AndNoAggregate()
     {
         var database = await CreateDatabase();
 
@@ -20,5 +21,17 @@ public class CreateStreamTests : TestBase
         Assert.That(fromDb, Is.Not.Null);
         Assert.That(fromDb.Id, Is.EqualTo(stream.Id));
         Assert.That(fromDb.StreamKey, Is.EqualTo(stream.StreamKey));
+    }
+
+    [Test]
+    public async Task CreatesStream_SingleEvent_AndNoAggregate()
+    {
+        var database = await CreateDatabase();
+        
+        var eventStore = InitEventStoreBuilder()
+            .WithDatabaseName(database)
+            .Build();
+        
+        
     }
 }

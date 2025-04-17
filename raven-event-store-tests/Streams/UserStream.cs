@@ -1,4 +1,4 @@
-﻿namespace Raven.EventStore.Tests;
+﻿namespace Raven.EventStore.Tests.Streams;
 
 public class UserStream : DocumentStream
 {
