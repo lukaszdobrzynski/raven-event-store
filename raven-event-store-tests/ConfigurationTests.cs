@@ -117,6 +117,27 @@ public class ConfigurationTests : TestBase
     }
 
     [Test]
+    public async Task Throws_WhenAggregateType_IsNotValid()
+    {
+        var invalid = typeof(InvalidAggregate);
+                
+        var storeName = CreateEventStoreNameUnique();
+        var dbName = await CreateDatabase();
+        
+        var exception = Assert.Throws<EventStoreConfigurationException>(() => DocumentStore.AddEventStore(options =>
+        {
+            options.DatabaseName = dbName;
+            options.Name = storeName;
+            options.Aggregates.Register(registry =>
+            {
+                registry.Add(invalid);
+            });
+        }));
+        
+        Assert.That(exception.Message, Does.Contain("must inherit from Aggregate<T>"));
+    }
+
+    [Test]
     public async Task Throws_WhenMultipleEventStores_RegisteredWithSameDatabase()
     {
         var dbName = await CreateDatabase();
