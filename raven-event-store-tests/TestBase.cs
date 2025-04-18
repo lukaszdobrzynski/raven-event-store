@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Raven.Client.Documents;
@@ -15,7 +16,7 @@ public abstract class TestBase
         .Build();
     
     protected IDocumentStore DocumentStore;
-    private readonly Dictionary<string, List<string>> _dbNames = new ();
+    private readonly ConcurrentDictionary<string, List<string>> _dbNames = new ();
     
     [OneTimeSetUp]
     public async Task SetUpOnceBeforeTests()
@@ -60,7 +61,7 @@ public abstract class TestBase
         }
         else
         {
-            _dbNames.Add(TestContext.CurrentContext.Test.FullName, [dbName]);
+            _dbNames.TryAdd(TestContext.CurrentContext.Test.FullName, [dbName]);
         } 
         
         var operation = new CreateDatabaseOperation(new DatabaseRecord(dbName));
@@ -111,6 +112,15 @@ public abstract class TestBase
         {
             var documents = await session.Query<T>().ToListAsync();
             return documents;
+        }
+    }
+
+    protected async Task AssertNoDocumentInDb<T>(string dbName, string id)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            var document = await session.LoadAsync<T>(id);
+            Assert.That(document, Is.Null);
         }
     }
 }

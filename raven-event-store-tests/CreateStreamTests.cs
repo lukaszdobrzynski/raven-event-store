@@ -2,61 +2,66 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Raven.EventStore.Tests.Aggregates;
+using Raven.EventStore.Tests.Asserts;
 using Raven.EventStore.Tests.Events;
 using Raven.EventStore.Tests.Streams;
 
 namespace Raven.EventStore.Tests;
 
+[Parallelizable]
 public class CreateStreamTests : TestBase
 {
     [Test]
     public async Task CreatesStream_WhenNoEvents()
     {
         var database = await CreateDatabase();
-
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .Build();
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>();
         
-        Assert.That(stream, Is.Not.Null);
-        Assert.That(stream.Id, Is.Not.Null);
-        Assert.That(stream.StreamKey, Is.Not.EqualTo(Guid.Empty));
-        Assert.That(stream.Position, Is.EqualTo(0));
-        Assert.That(stream.AggregateId, Is.Null);
+        StreamAssert.NotNull(stream);
+        StreamAssert.KeyNotEmpty(stream);
+        StreamAssert.Position(stream, 0);
+        
+        StreamAssert.IdNotNull(stream);
+        StreamAssert.AggregateIdNull(stream);
+        
+        StreamAssert.ArchiveNull(stream);
+        StreamAssert.SeedNull(stream);
     }
 
     [Test]
     public async Task CreatesStream_WithSingleEvent()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .Build();
 
-        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "lukasz@event-driven.com",
+        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
             role: "MEMBER");
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
         
-        Assert.That(stream.Position, Is.EqualTo(1));
-        Assert.That(stream.Events, Is.Not.Empty);
-        Assert.That(stream.Events.Count, Is.EqualTo(1));
-        Assert.That(stream.AggregateId, Is.Null);
+        StreamAssert.Position(stream, 1);
+        StreamAssert.EventsNotEmpty(stream);
+        StreamAssert.EventsCount(stream, 1);
+        StreamAssert.AggregateIdNull(stream);
         
         var @event = stream.Events[0];
         
         Assert.That(@event.EventId, Is.Not.EqualTo(Guid.Empty));
         Assert.That(@event.Timestamp, Is.Not.EqualTo(DateTime.MinValue));
-        Assert.That(@event.Version, Is.EqualTo(1));
-        Assert.That(@event, Is.InstanceOf<UserRegisteredEvent>());
+        
+        EventAssert.Version(@event, 1);
+        EventAssert.Type<UserRegisteredEvent>(@event);
         
         var typedEvent = (UserRegisteredEvent)@event;
         
         Assert.That(typedEvent.Username, Is.EqualTo("event-sorcerer"));
-        Assert.That(typedEvent.Email, Is.EqualTo("lukasz@event-driven.com"));
+        Assert.That(typedEvent.Email, Is.EqualTo("john@event-sorcerer.com"));
         Assert.That(typedEvent.Role, Is.EqualTo("MEMBER"));
     }
 
@@ -64,40 +69,39 @@ public class CreateStreamTests : TestBase
     public async Task CreatesStream_WithSingleEvent_AndGlobalLog()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .WithGlobalStreamLogging()
             .Build();
         
-        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "lukasz@event-driven.com",
+        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
             role: "MEMBER");
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
 
         var globalLog = await LoadSingleAsync<GlobalEventLog>(database);
         
-        Assert.That(stream.Events, Has.Count.EqualTo(1));
+        StreamAssert.EventsCount(stream, 1);
         
-        Assert.That(globalLog.StreamId, Is.EqualTo(stream.Id));
-        Assert.That(globalLog.StreamKey, Is.EqualTo(stream.StreamKey));
-        Assert.That(globalLog.Event, Is.InstanceOf<UserRegisteredEvent>());
-        Assert.That(globalLog.Event.EventId, Is.EqualTo(stream.Events[0].EventId));
-        Assert.That(globalLog.Sequence, Is.Not.Null);
+        EventAssert.Type<UserRegisteredEvent>(globalLog.Event);
+        
+        GlobalLogAssert.StreamId(globalLog, stream.Id);
+        GlobalLogAssert.StreamKey(globalLog, stream.StreamKey);
+        GlobalLogAssert.EventId(globalLog, stream.Events[0].EventId);
+        GlobalLogAssert.SequenceNotNull(globalLog);
     }
 
     [Test]
     public async Task CreatesStream_WithSingleEvent_GlobalLog_AndAggregate()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .WithAggregate(typeof(User))
             .WithGlobalStreamLogging()
             .Build();
         
-        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "lukasz@event-driven.com",
+        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
             role: "MEMBER");
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
@@ -105,12 +109,13 @@ public class CreateStreamTests : TestBase
         var globalLog = await LoadSingleAsync<GlobalEventLog>(database);
         var aggregate = await LoadSingleAsync<User>(database);
         
-        Assert.That(globalLog.StreamKey, Is.EqualTo(stream.StreamKey));
-        Assert.That(aggregate.StreamKey, Is.EqualTo(stream.StreamKey));
-        Assert.That(aggregate.Id, Is.EqualTo(stream.AggregateId));
+        GlobalLogAssert.StreamKey(globalLog, stream.StreamKey);
+        
+        AggregateAssert.StreamKey(aggregate, stream.StreamKey);
+        AggregateAssert.AggregateId(aggregate, stream.AggregateId);
 
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
-        Assert.That(aggregate.Email, Is.EqualTo("lukasz@event-driven.com"));
+        Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
         Assert.That(aggregate.Role, Is.EqualTo("MEMBER"));
     }
 
@@ -118,106 +123,105 @@ public class CreateStreamTests : TestBase
     public async Task CreatesStream_WithMultipleEvents_AndGlobalLog()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .WithGlobalStreamLogging()
             .Build();
         
-        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "lukasz@event-driven.com",
+        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
             role: "MEMBER");
         
         var verified = UserVerifiedEvent.Create;
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered, verified);
         
-        Assert.That(stream.Events, Has.Count.EqualTo(2));
-        Assert.That(stream.Position, Is.EqualTo(2));
-        Assert.That(stream.AggregateId, Is.Null);
+        StreamAssert.EventsCount(stream, 2);
+        StreamAssert.Position(stream, 2);
+        StreamAssert.AggregateIdNull(stream);
         
         var event1 = stream.Events[0];
         var event2 = stream.Events[1];
         
-        Assert.That(event1.Version, Is.EqualTo(1));
-        Assert.That(event2.Version, Is.EqualTo(2));
+        EventAssert.Version(event1, 1);
+        EventAssert.Version(event2, 2);
         
         var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
         
-        Assert.That(globalLogs, Has.Count.EqualTo(2));
+        GlobalLogAssert.LogCount(globalLogs, 2);
         
         var globalLog1 = globalLogs[0];
         var globalLog2 = globalLogs[1];
         
-        Assert.That(globalLog1.Event, Is.InstanceOf<UserRegisteredEvent>());
-        Assert.That(globalLog2.Event, Is.InstanceOf<UserVerifiedEvent>());
-        Assert.That(globalLog1.Sequence, Is.LessThan(globalLog2.Sequence));
-        Assert.That(globalLog1.StreamId, Is.EqualTo(stream.Id));
-        Assert.That(globalLog2.StreamId, Is.EqualTo(stream.Id));
-        Assert.That(stream.StreamKey, Is.EqualTo(globalLog1.StreamKey));
-        Assert.That(stream.StreamKey, Is.EqualTo(globalLog2.StreamKey));
-        Assert.That(globalLog1.StreamKey, Is.EqualTo(globalLog2.StreamKey));
+        EventAssert.Type<UserRegisteredEvent>(globalLog1.Event);
+        EventAssert.Type<UserVerifiedEvent>(globalLog2.Event);
+        
+        GlobalLogAssert.SequenceLessThen(globalLog1, globalLog2.Sequence);
+        GlobalLogAssert.StreamId(globalLog1, stream.Id);
+        GlobalLogAssert.StreamId(globalLog2, stream.Id);
+        GlobalLogAssert.StreamKey(globalLog1, stream.StreamKey);
+        GlobalLogAssert.StreamKey(globalLog2, stream.StreamKey);
     }
 
     [Test]
     public async Task CreatesStream_WithMultipleEvents_Aggregate_AndGlobalLog()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .WithAggregate(typeof(User))
             .WithGlobalStreamLogging()
             .Build();
         
-        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "lukasz@event-driven.com",
+        var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
             role: "MEMBER");
         var verified = UserVerifiedEvent.Create;
         var activated = UserActivatedEvent.Create;
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered, verified, activated);
         
-        Assert.That(stream.Events, Has.Count.EqualTo(3));
-        Assert.That(stream.Position, Is.EqualTo(3));
+        StreamAssert.EventsCount(stream, 3);
+        StreamAssert.Position(stream, 3);
          
         var event1 = stream.Events[0];
         var event2 = stream.Events[1];
         var event3 = stream.Events[2];
         
-        Assert.That(event1.Version, Is.EqualTo(1));
-        Assert.That(event2.Version, Is.EqualTo(2));
-        Assert.That(event3.Version, Is.EqualTo(3));
+        EventAssert.Version(event1, 1);
+        EventAssert.Version(event2, 2);
+        EventAssert.Version(event3, 3);
         
         var aggregate = await LoadSingleAsync<User>(database);
         
-        Assert.That(aggregate.Id, Is.EqualTo(stream.AggregateId));
+        AggregateAssert.AggregateId(aggregate, stream.AggregateId);
+        
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
-        Assert.That(aggregate.Email, Is.EqualTo("lukasz@event-driven.com"));
+        Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
         Assert.That(aggregate.Role, Is.EqualTo("MEMBER"));
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         
         var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
         
-        Assert.That(globalLogs, Has.Count.EqualTo(3));
+        GlobalLogAssert.LogCount(globalLogs, 3);
         
         var globalLog1 = globalLogs[0];
         var globalLog2 = globalLogs[1];
         var globalLog3 = globalLogs[2];
         
-        Assert.That(globalLog1.Event, Is.InstanceOf<UserRegisteredEvent>());
-        Assert.That(globalLog2.Event, Is.InstanceOf<UserVerifiedEvent>());
-        Assert.That(globalLog3.Event, Is.InstanceOf<UserActivatedEvent>());
-        Assert.That(globalLog1.Sequence, Is.LessThan(globalLog2.Sequence));
-        Assert.That(globalLog2.Sequence, Is.LessThan(globalLog3.Sequence));
-        Assert.That(globalLog1.StreamId, Is.EqualTo(stream.Id));
-        Assert.That(globalLog2.StreamId, Is.EqualTo(stream.Id));
-        Assert.That(globalLog3.StreamId, Is.EqualTo(stream.Id));
+        EventAssert.Type<UserRegisteredEvent>(globalLog1.Event);
+        EventAssert.Type<UserVerifiedEvent>(globalLog2.Event);
+        EventAssert.Type<UserActivatedEvent>(globalLog3.Event);
+        
+        GlobalLogAssert.SequenceLessThen(globalLog1, globalLog2.Sequence);
+        GlobalLogAssert.SequenceLessThen(globalLog2, globalLog3.Sequence);
+        GlobalLogAssert.StreamId(globalLog1, stream.Id);
+        GlobalLogAssert.StreamId(globalLog2, stream.Id);
+        GlobalLogAssert.StreamId(globalLog3, stream.Id);
     }
 
     [Test]
     public async Task CreatesStream_WithProvidedId()
     {
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .Build();
@@ -236,7 +240,6 @@ public class CreateStreamTests : TestBase
         List<Event> events = null;
         
         var database = await CreateDatabase();
-
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .Build();
@@ -247,17 +250,16 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task Throws_WhenEventList_ContainsNull()
     {
-        var event1 = UserRegisteredEvent.Create("event-sorcerer", "lukasz@event-driven.com", "MEMBER");
+        var event1 = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
         Event event2 = null;
         
         var database = await CreateDatabase();
-        
         var eventStore = InitEventStoreBuilder()
             .WithDatabaseName(database)
             .Build();
         
-        var exception = Assert.ThrowsAsync<ArgumentException>(() => eventStore.CreateStreamAndStoreAsync<UserStream>(event1, event2));
+        var exception = Assert.ThrowsAsync<ArgumentException>(async () => await eventStore.CreateStreamAndStoreAsync<UserStream>(event1, event2));
         
-        Assert.That(exception.Message, Does.Contain("at index 1"));
+        Assert.That(exception.Message, Does.Contain("Null event found at index 1"));
     }
 }

@@ -4,6 +4,7 @@ using Raven.EventStore.Tests.Aggregates;
 
 namespace Raven.EventStore.Tests;
 
+[Parallelizable]
 public class ConfigurationTests : TestBase
 {
     [TestCase("")]
