@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Raven.Client.Documents;
 using Raven.Client.ServerWide;
 using Raven.Client.ServerWide.Operations;
+using Raven.EventStore.Tests.Helpers;
 using Testcontainers.RavenDb;
 
 namespace Raven.EventStore.Tests;
@@ -13,6 +14,9 @@ public abstract class TestBase
 {
     private readonly RavenDbContainer _container = new RavenDbBuilder()
         .WithImage("ravendb/ravendb:7.0-latest")
+        .WithEnvironment("RAVEN_License_Eula_Accepted", "true")
+        .WithEnvironment("RAVEN_Setup_Mode", "None")
+        .WithEnvironment("RAVEN_Security_UnsecuredAccessAllowed", "PublicNetwork")
         .Build();
     
     protected IDocumentStore DocumentStore;
@@ -77,6 +81,12 @@ public abstract class TestBase
         var instance = Activator.CreateInstance<T>();
         var id = await DocumentStore.HiLoIdGenerator.GenerateDocumentIdAsync(databaseName, instance);
         return idSuffix == null ? id : $"{id}/{idSuffix}";
+    }
+
+    protected static string CreateSliceStreamNextId(string semanticId, string nextSuffix)
+    {
+        var parts = semanticId.Split("/");
+        return $"{parts[0]}/{parts[1]}/{nextSuffix}";
     }
 
     protected RavenEventStoreBuilder InitEventStoreBuilder()

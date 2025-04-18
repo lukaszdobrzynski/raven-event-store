@@ -248,7 +248,7 @@ public class CreateStreamTests : TestBase
     }
 
     [Test]
-    public async Task Throws_WhenEventList_ContainsNull()
+    public async Task Throws_WhenEvents_ContainNull()
     {
         var event1 = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
         Event event2 = null;

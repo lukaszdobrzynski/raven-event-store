@@ -46,7 +46,7 @@ public class AppendTests : TestBase
     }
 
     [Test]
-    public async Task Throws_WhenEventList_ContainsNull()
+    public async Task Throws_WhenEvents_ContainNull()
     {
         var event1 = UserVerifiedEvent.Create;
         Event event2 = null;

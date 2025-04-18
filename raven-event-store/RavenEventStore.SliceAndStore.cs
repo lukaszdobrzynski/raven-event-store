@@ -6,14 +6,38 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
+    public Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, string newStreamId,
+        params Event[] events) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:false);
+    }
+    
+    public Task<TStream> SliceStreamAndStoreAsyncOptimistically<TStream>(string sourceStreamId, string newStreamId,
+        params Event[] events) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:true);
+    }
+
+    public TStream SliceStreamAndStore<TStream>(string sourceStreamId, string newStreamId, params Event[] events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:false);
+    }
+    
+    public TStream SliceStreamAndStoreOptimistically<TStream>(string sourceStreamId, string newStreamId, params Event[] events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:true);
+    }
+    
     public Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, string newStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
     {
         return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:false);
     }
     
-    public Task<TStream> SliceStreamAndStoreAsyncOptimistically<TStream>(string originStreamId, string derivedStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
+    public Task<TStream> SliceStreamAndStoreAsyncOptimistically<TStream>(string sourceStreamId, string newStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
     {
-        return SliceStreamAndStoreAsync<TStream>(originStreamId, derivedStreamId, events?.ToList(), useOptimisticConcurrency:true);
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:true);
     }
 
     public TStream SliceStreamAndStore<TStream>(string sourceStreamId, string newStreamId, IEnumerable<Event> events)

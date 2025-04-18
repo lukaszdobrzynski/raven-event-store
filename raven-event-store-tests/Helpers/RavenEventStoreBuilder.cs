@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Raven.Client.Documents;
 
-namespace Raven.EventStore.Tests;
+namespace Raven.EventStore.Tests.Helpers;
 
 public class RavenEventStoreBuilder
 {
@@ -10,7 +10,6 @@ public class RavenEventStoreBuilder
     private string Name { get; set; }
     private string DatabaseName { get; set; }
     private bool UseGlobalStreamLogging { get; set; }
-    
     private List<Type> Aggregates { get; set; } = [];
 
     private RavenEventStoreBuilder(IDocumentStore documentStore)

@@ -9,6 +9,11 @@ public static class StreamAssert
         Assert.That(stream, Is.Not.Null);
     }
 
+    public static void Key<T>(T stream, Guid expected) where T : DocumentStream
+    {
+        Assert.That(stream.StreamKey, Is.EqualTo(expected));
+    }
+
     public static void KeyNotEmpty<T>(T stream) where T : DocumentStream
     {
         Assert.That(stream.StreamKey, Is.Not.EqualTo(Guid.Empty));
@@ -32,6 +37,16 @@ public static class StreamAssert
     public static void SeedNull<T>(T stream) where T : DocumentStream
     {
         Assert.That(stream.Seed, Is.Null);   
+    }
+
+    public static void ArchiveNotNull<T>(T stream) where T : DocumentStream
+    {
+        Assert.That(stream.Archive, Is.Not.Null);
+    }
+
+    public static void SeedNotNull<T>(T stream) where T : DocumentStream
+    {
+        Assert.That(stream.Seed, Is.Not.Null);
     }
     
     public static void AggregateIdNull<T>(T stream) where T : DocumentStream
