@@ -65,6 +65,53 @@ public class AppendTests : TestBase
     }
 
     [Test]
+    public async Task Throws_WhenAppends_ToNonHead()
+    {
+        var database = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder()
+            .WithDatabaseName(database)
+            .Build();
+
+        var sourceStreamId = await CreateSemanticId<UserStream>(database, "2025-04");
+        var sourceStream = eventStore.CreateStreamAndStore<UserStream>(sourceStreamId, 
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+        
+        var sliceStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStreamId, sliceStreamId, UserVerifiedEvent.Create);
+        
+        var sourceStreamFromDbBefore = await LoadAsync<UserStream>(database, sourceStreamId);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDbBefore);
+        StreamAssert.IsHead(sliceStream);
+        StreamAssert.Position(sourceStreamFromDbBefore, 1);
+        StreamAssert.Position(sliceStream, 2);
+        StreamAssert.EventsCount(sourceStreamFromDbBefore, 1);
+        StreamAssert.EventsCount(sliceStream, 1);
+        StreamAssert.PreviousSliceId(sourceStreamFromDbBefore, null);
+        StreamAssert.PreviousSliceId(sliceStream, sourceStreamFromDbBefore.Id);
+        StreamAssert.NextSliceId(sourceStreamFromDbBefore, sliceStream.Id);
+        StreamAssert.NextSliceId(sliceStream, null);
+
+        Assert.ThrowsAsync<AppendToNotHeadException>(async () => await eventStore.AppendAndStoreAsync<UserStream>(
+            sourceStreamId,
+            UserActivatedEvent.Create));
+        
+        var sourceStreamFromDbAfter = await LoadAsync<UserStream>(database, sourceStreamId);
+        var sliceStreamFromDbAfter = await LoadAsync<UserStream>(database, sliceStreamId);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDbAfter);
+        StreamAssert.IsHead(sliceStreamFromDbAfter);
+        StreamAssert.Position(sourceStreamFromDbAfter, sourceStreamFromDbBefore.Position);
+        StreamAssert.Position(sliceStreamFromDbAfter, sliceStream.Position);
+        StreamAssert.EventsCount(sourceStreamFromDbAfter, sourceStreamFromDbBefore.Events.Count);
+        StreamAssert.EventsCount(sliceStreamFromDbAfter, sliceStream.Events.Count);
+        StreamAssert.PreviousSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.PreviousSliceId);
+        StreamAssert.PreviousSliceId(sliceStreamFromDbAfter, sliceStream.PreviousSliceId);
+        StreamAssert.NextSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.NextSliceId);
+        StreamAssert.NextSliceId(sliceStreamFromDbAfter, sliceStream.NextSliceId);
+    }
+
+    [Test]
     public async Task AppendsSingleEventToStream()
     {
         var database = await CreateDatabase();

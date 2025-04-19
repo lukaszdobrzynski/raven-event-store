@@ -15,6 +15,7 @@ public partial class RavenEventStore
         var stream = session.Load<TStream>(streamId);
 
         CheckForNonExistentStream(stream, streamId);
+        CheckForAttemptToAppendToNonHead(stream);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
         AddEventsToStream(stream, events);
@@ -38,6 +39,7 @@ public partial class RavenEventStore
         var stream = await session.LoadAsync<TStream>(streamId);
 
         CheckForNonExistentStream(stream, streamId);
+        CheckForAttemptToAppendToNonHead(stream);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
         AddEventsToStream(stream, events);

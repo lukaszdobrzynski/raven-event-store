@@ -2,4 +2,4 @@
 
 namespace Raven.EventStore.Exceptions;
 
-public class SliceStreamNotHeadException (string message) : Exception(message);
+public class CreateSliceStreamFromNotHeadException (string message) : Exception(message);
