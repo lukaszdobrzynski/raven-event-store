@@ -1,0 +1,13 @@
+﻿name: ci-pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  raven-event-store-unit-tests:
+    name: raven event store unit tests
+    uses: ./.github/workflows/setup-and-test.yml
+    with:
+      test-project: ./raven-event-store-tests

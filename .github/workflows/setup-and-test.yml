@@ -1,0 +1,21 @@
+﻿name: setup-and-test
+
+on:
+  workflow_call:
+    inputs:
+      test-project:
+        required: true
+        type: string
+
+jobs:
+  setup-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0
+      - name: Run tests
+        run: dotnet test ${{ inputs.test-project }}
