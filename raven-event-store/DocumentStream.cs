@@ -15,4 +15,7 @@ public abstract class DocumentStream
     public DateTime CreatedAt { get; set; }
     public Aggregate Seed { get; set; }
     public Aggregate Archive { get; set; }
+    public string NextSliceId { get; set; }
+    public string PreviousSliceId { get; set; }
+    public bool IsHeadSlice => NextSliceId == null;
 }

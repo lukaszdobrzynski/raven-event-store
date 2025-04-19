@@ -56,7 +56,8 @@ public class SliceStreamTests : TestBase
         StreamAssert.Position(sourceStream, 0);
         StreamAssert.ArchiveNull(sourceStream);
         StreamAssert.SeedNull(sourceStream);
-        StreamAssert.AggregateIdNull(sourceStream);   
+        StreamAssert.AggregateIdNull(sourceStream);
+        StreamAssert.IsHead(sourceStream);
     }
 
     [Test]
@@ -88,7 +89,8 @@ public class SliceStreamTests : TestBase
         StreamAssert.Position(sourceStream, 0);
         StreamAssert.ArchiveNull(sourceStream);
         StreamAssert.SeedNull(sourceStream);
-        StreamAssert.AggregateIdNull(sourceStream);   
+        StreamAssert.AggregateIdNull(sourceStream);
+        StreamAssert.IsHead(sourceStream);
     }
 
     [Test]
@@ -116,6 +118,13 @@ public class SliceStreamTests : TestBase
         StreamAssert.SeedNull(nextStream);
         StreamAssert.AggregateIdNull(sourceStream);
         StreamAssert.AggregateIdNull(nextStream);
+        
+        StreamAssert.IsNotHead(sourceStream);
+        StreamAssert.IsHead(nextStream);
+        StreamAssert.PreviousSliceId(sourceStream, null);
+        StreamAssert.NextSliceId(sourceStream, nextStreamId);
+        StreamAssert.PreviousSliceId(nextStream, sourceStreamId);
+        StreamAssert.NextSliceId(nextStream, null);
     }
 
     [Test]
@@ -144,6 +153,15 @@ public class SliceStreamTests : TestBase
         StreamAssert.EventsCount(nextStream, 1);
         StreamAssert.AggregateIdNull(sourceStream);
         StreamAssert.AggregateIdNull(nextStream);
+        
+        var sourceStreamFromDb = await LoadAsync<UserStream>(database, sourceStreamId);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDb);
+        StreamAssert.IsHead(nextStream);
+        StreamAssert.PreviousSliceId(sourceStreamFromDb, null);
+        StreamAssert.NextSliceId(sourceStreamFromDb, nextStreamId);
+        StreamAssert.PreviousSliceId(nextStream, sourceStreamId);
+        StreamAssert.NextSliceId(nextStream, null);
         
         EventAssert.Version(sourceStream.Events[0], 1);
         EventAssert.Version(nextStream.Events[0], 2);
@@ -191,7 +209,17 @@ public class SliceStreamTests : TestBase
         StreamAssert.ArchiveNull(sliceStream2FromDb);
         StreamAssert.SeedNull(sourceStreamFromDb);
         StreamAssert.SeedNotNull(sliceStream1FromDb);
-        StreamAssert.SeedNotNull(sliceStream2FromDb); 
+        StreamAssert.SeedNotNull(sliceStream2FromDb);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDb);
+        StreamAssert.IsNotHead(sliceStream1FromDb);
+        StreamAssert.IsHead(sliceStream2FromDb);
+        StreamAssert.PreviousSliceId(sourceStreamFromDb, null);
+        StreamAssert.PreviousSliceId(sliceStream1FromDb, sourceStreamId);
+        StreamAssert.PreviousSliceId(sliceStream2FromDb, sliceStream1Id);
+        StreamAssert.NextSliceId(sourceStreamFromDb, sliceStream1FromDb.Id);
+        StreamAssert.NextSliceId(sliceStream1FromDb, sliceStream2FromDb.Id);
+        StreamAssert.NextSliceId(sliceStream2FromDb, null);
         
         var sourceStreamArchive = (User)sourceStreamFromDb.Archive;
         var sliceStream1Archive = (User)sliceStream1FromDb.Archive;
@@ -230,5 +258,61 @@ public class SliceStreamTests : TestBase
         Assert.That(aggregate.Email, Is.EqualTo("alice@event-sorcerer.io"));
         Assert.That(aggregate.Role, Is.EqualTo("ADMIN"));
         Assert.That(aggregate.Status, Is.EqualTo("DEACTIVATED"));
+    }
+
+    [Test]
+    public async Task Throws_WhenSourceStream_IsNotHead()
+    {
+        var database = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder()
+            .WithDatabaseName(database)
+            .Build();
+        
+        var sourceStreamId = await CreateSemanticId<UserStream>(database, "2025-04");
+        await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, 
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create,
+            UserActivatedEvent.Create);
+        
+        var sliceStream1Id = CreateSliceStreamNextId(sourceStreamId, "2025-05");
+        await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, sliceStream1Id, 
+            UserChangedEmailEvent.Create("alice@event-sorcerer.io"),
+            UserRoleChangedEvent.Create("ADMIN"));
+        
+        var sourceStreamFromDbBefore = await LoadAsync<UserStream>(database, sourceStreamId);
+        var sliceStream1FromDbBefore = await LoadAsync<UserStream>(database, sliceStream1Id);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDbBefore);
+        StreamAssert.IsHead(sliceStream1FromDbBefore);
+        
+        StreamAssert.PreviousSliceId(sourceStreamFromDbBefore, null);
+        StreamAssert.PreviousSliceId(sliceStream1FromDbBefore, sourceStreamId);
+        StreamAssert.NextSliceId(sourceStreamFromDbBefore, sliceStream1FromDbBefore.Id);
+        StreamAssert.NextSliceId(sliceStream1FromDbBefore, null);
+        
+        StreamAssert.Position(sourceStreamFromDbBefore, 3);
+        StreamAssert.Position(sliceStream1FromDbBefore, 5);
+        
+        var sliceStream2Id = CreateSliceStreamNextId(sliceStream1Id, "2025-06");
+
+        Assert.ThrowsAsync<CreateSliceStreamFromNotHeadException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, sliceStream2Id,
+                UserDeactivatedEvent.Create));
+        
+        await AssertNoDocumentInDb<UserStream>(database, sliceStream2Id);
+
+        var sourceStreamFromDbAfter = await LoadAsync<UserStream>(database, sourceStreamId);
+        var sliceStream1FromDbAfter = await LoadAsync<UserStream>(database, sliceStream1Id);
+        
+        StreamAssert.IsNotHead(sourceStreamFromDbAfter);
+        StreamAssert.IsHead(sliceStream1FromDbAfter);
+        
+        StreamAssert.PreviousSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.PreviousSliceId);
+        StreamAssert.PreviousSliceId(sliceStream1FromDbAfter, sliceStream1FromDbBefore.PreviousSliceId);
+        StreamAssert.NextSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.NextSliceId);
+        StreamAssert.NextSliceId(sliceStream1FromDbAfter, sliceStream1FromDbBefore.NextSliceId);
+        
+        StreamAssert.Position(sourceStreamFromDbAfter, sourceStreamFromDbAfter.Position);
+        StreamAssert.Position(sliceStream1FromDbAfter, sliceStream1FromDbAfter.Position);
     }
 }

@@ -68,4 +68,24 @@ public static class StreamAssert
     {
         Assert.That(stream.AggregateId, Is.Not.Null);
     }
+
+    public static void IsHead<TStream>(TStream stream) where TStream : DocumentStream
+    {
+        Assert.That(stream.IsHeadSlice, Is.True);
+    }
+
+    public static void IsNotHead<TStream>(TStream stream) where TStream : DocumentStream
+    {
+        Assert.That(stream.IsHeadSlice, Is.False);
+    }
+
+    public static void PreviousSliceId<TStream>(TStream stream, string expected) where TStream : DocumentStream
+    {
+        Assert.That(stream.PreviousSliceId, Is.EqualTo(expected));
+    }
+    
+    public static void NextSliceId<TStream>(TStream stream, string expected) where TStream : DocumentStream
+    {
+        Assert.That(stream.NextSliceId, Is.EqualTo(expected));
+    }
 }
