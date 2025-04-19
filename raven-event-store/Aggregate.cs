@@ -4,8 +4,8 @@ namespace Raven.EventStore;
 
 public abstract class Aggregate
 {
-    public string Id { get; set; }
-    public Guid StreamKey { get; set; }
+    public string Id { get; internal set; }
+    public Guid StreamKey { get; internal set; }
     internal abstract void Build(DocumentStream stream);
 }
 
