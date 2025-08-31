@@ -40,7 +40,6 @@ By leveraging RavenDB under the hood, Raven Event Store gives an application a r
 ```csharp
 DocumentStore.AddEventStore(options =>
 {
-    options.Name = "event-store-name";
     options.DatabaseName = "database-name";
     options.Aggregates.Register(registry =>
     {
@@ -51,7 +50,7 @@ DocumentStore.AddEventStore(options =>
     options.UseGlobalStreamLogging = true;
 });
 
-var eventStore = DocumentStore.GetEventStore("event-store-name");
+var eventStore = DocumentStore.GetEventStore("database-name");
 
 var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
     UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com"));
