@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using IdGen;
 using Raven.Client.Documents;
 using Raven.Client.Documents.Session;
 
@@ -8,7 +7,6 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private static readonly IdGenerator GlobalEventLogSequentialIdGenerator = new (0);
     public string Name { get; }
     internal string DatabaseName { get; private set; }
     private bool UseGlobalStreamLogging { get; set; }

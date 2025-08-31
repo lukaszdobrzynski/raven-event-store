@@ -6,7 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="IdGen" Version="3.0.7" />
       <PackageReference Include="RavenDB.Client" Version="7.0.1" />
     </ItemGroup>
 

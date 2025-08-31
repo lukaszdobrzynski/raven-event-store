@@ -31,11 +31,8 @@ public partial class RavenEventStore
         }
     }
 
-    private GlobalEventLog CreateGlobalEventLog(string streamId, Guid streamKey, Event @event)
+    private static GlobalEventLog CreateGlobalEventLog(string streamId, Guid streamKey, Event @event)
     {
-        var sequence = GetSequence();
-        return GlobalEventLog.From(sequence, streamId, streamKey, @event);
+        return GlobalEventLog.From(streamId, streamKey, @event);
     }
-
-    private static string GetSequence() => GlobalEventLogSequentialIdGenerator.CreateId().ToString();
 }

@@ -24,14 +24,4 @@ public static class GlobalLogAssert
     {
         Assert.That(log.Event.EventId, Is.EqualTo(expected));
     }
-    
-    public static void SequenceNotNull(GlobalEventLog log)
-    {
-        Assert.That(log.Sequence, Is.Not.Null);
-    }
-    
-    public static void SequenceLessThen(GlobalEventLog log, string sequence)
-    {
-        Assert.That(log.Sequence, Is.LessThan(sequence));
-    }
 }

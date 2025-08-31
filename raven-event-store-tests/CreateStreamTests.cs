@@ -88,7 +88,6 @@ public class CreateStreamTests : TestBase
         GlobalLogAssert.StreamId(globalLog, stream.Id);
         GlobalLogAssert.StreamKey(globalLog, stream.StreamKey);
         GlobalLogAssert.EventId(globalLog, stream.Events[0].EventId);
-        GlobalLogAssert.SequenceNotNull(globalLog);
     }
 
     [Test]
@@ -155,7 +154,6 @@ public class CreateStreamTests : TestBase
         EventAssert.Type<UserRegisteredEvent>(globalLog1.Event);
         EventAssert.Type<UserVerifiedEvent>(globalLog2.Event);
         
-        GlobalLogAssert.SequenceLessThen(globalLog1, globalLog2.Sequence);
         GlobalLogAssert.StreamId(globalLog1, stream.Id);
         GlobalLogAssert.StreamId(globalLog2, stream.Id);
         GlobalLogAssert.StreamKey(globalLog1, stream.StreamKey);
@@ -211,8 +209,6 @@ public class CreateStreamTests : TestBase
         EventAssert.Type<UserVerifiedEvent>(globalLog2.Event);
         EventAssert.Type<UserActivatedEvent>(globalLog3.Event);
         
-        GlobalLogAssert.SequenceLessThen(globalLog1, globalLog2.Sequence);
-        GlobalLogAssert.SequenceLessThen(globalLog2, globalLog3.Sequence);
         GlobalLogAssert.StreamId(globalLog1, stream.Id);
         GlobalLogAssert.StreamId(globalLog2, stream.Id);
         GlobalLogAssert.StreamId(globalLog3, stream.Id);

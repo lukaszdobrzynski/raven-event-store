@@ -220,10 +220,6 @@ public class AppendTests : TestBase
         GlobalLogAssert.StreamId(log3, streamFromDb.Id);
         GlobalLogAssert.StreamId(log4, streamFromDb.Id);
         
-        GlobalLogAssert.SequenceLessThen(log1, log2.Sequence);
-        GlobalLogAssert.SequenceLessThen(log2, log3.Sequence);
-        GlobalLogAssert.SequenceLessThen(log3, log4.Sequence);
-        
         GlobalLogAssert.EventId(log1, streamFromDb.Events[0].EventId);
         GlobalLogAssert.EventId(log2, streamFromDb.Events[1].EventId);
         GlobalLogAssert.EventId(log3, streamFromDb.Events[2].EventId);
