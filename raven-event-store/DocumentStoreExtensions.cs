@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Raven.Client.Documents;
 using Raven.EventStore.Exceptions;
 
@@ -7,7 +8,7 @@ namespace Raven.EventStore;
 
 public static class DocumentStoreExtensions
 {
-    private static readonly Dictionary<string, RavenEventStore> EventStores = new ();
+    private static readonly List<RavenEventStore> EventStores = new ();
 
     public static void AddEventStore(this IDocumentStore documentStore, Action<RavenEventStoreConfigurationOptions> configure)
     {
@@ -16,57 +17,46 @@ public static class DocumentStoreExtensions
         var options = new RavenEventStoreConfigurationOptions();
         configure(options);
 
-        if (string.IsNullOrWhiteSpace(options.Name))
-            throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} {nameof(RavenEventStoreConfigurationOptions.Name)} cannot be empty)");
+        if (string.IsNullOrWhiteSpace(options.DatabaseName))
+        {
+            throw new EventStoreConfigurationException($"{nameof(RavenEventStore.DatabaseName)} must be provided.");
+        }
+        
+        if (EventStoreExists(options.DatabaseName))
+        {
+            throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the database name {options.DatabaseName} has already been configured. " +
+                                                       $"You cannot configure another event store accessing the same database.");
+        }
 
-        if (EventStores.TryGetValue(options.Name, out _))
-            throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the {nameof(RavenEventStoreConfigurationOptions.Name)} {options.Name} has already been added.");
-                
-        var eventStore = new RavenEventStore(documentStore, options.Name);
-        EventStores.Add(options.Name, eventStore);
+        var eventStore = new RavenEventStore(documentStore);
+        eventStore.SetDatabaseName(options.DatabaseName);
+        EventStores.Add(eventStore);
         
-        ConfigureAggregates(options.Name, options.Aggregates);
-        ConfigureGlobalStreamLogging(options.Name, options.UseGlobalStreamLogging);
-        
-        var databaseName = options.DatabaseName ?? documentStore.Database;
-        ConfigureDatabaseName(options.Name, databaseName);
+        ConfigureAggregates(eventStore, options.Aggregates);
+        ConfigureGlobalStreamLogging(eventStore, options.UseGlobalStreamLogging);
     }
     
-    public static RavenEventStore GetEventStore(this IDocumentStore _, string name)
+    public static RavenEventStore GetEventStore(this IDocumentStore _, string databaseName)
     {
-        if (EventStores.TryGetValue(name, out var eventStore) == false)
-            throw new NonExistentEventStoreException(name);
+        if (EventStoreExists(databaseName) == false)
+            throw new NonExistentEventStoreException(databaseName);
         
-        return eventStore;
+        return EventStores.Single(x => x.DatabaseName.Equals(databaseName, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static void ConfigureAggregates(string storeName, RavenEventStoreAggregates aggregates)
+    private static void ConfigureAggregates(RavenEventStore eventStore, RavenEventStoreAggregates aggregates)
     {
         foreach (var type in aggregates.Registry.Types)
         {
-            var eventStore = EventStores[storeName];
             eventStore.RegisterAggregate(type);
         }
     }
 
-    private static void ConfigureGlobalStreamLogging(string storeName, bool use)
+    private static void ConfigureGlobalStreamLogging(RavenEventStore eventStore, bool use)
     {
-        var eventStore = EventStores[storeName];
         eventStore.SetUseGlobalStreamLogging(use);  
     }
 
-    private static void ConfigureDatabaseName(string storeName, string databaseName)
-    {
-        foreach (var store in EventStores.Values)
-        {
-            if (store.DatabaseName == databaseName)
-            {
-                throw new EventStoreConfigurationException($"{nameof(RavenEventStore)} with the database name {databaseName} has already been configured. " +
-                                                           $"You cannot configure another event store accessing the same database.");
-            }
-        }
-        
-        var eventStore = EventStores[storeName];
-        eventStore.SetDatabaseName(databaseName);
-    }
+    private static bool EventStoreExists(string databaseName) => EventStores.Exists(x =>
+        x.DatabaseName.Equals(databaseName, StringComparison.OrdinalIgnoreCase));
 }

@@ -14,9 +14,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WhenNoEvents()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>();
@@ -35,9 +34,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithSingleEvent()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
         var registered = UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com",
@@ -68,9 +66,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithSingleEvent_AndGlobalLog()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithGlobalStreamLogging()
             .Build();
         
@@ -79,7 +76,7 @@ public class CreateStreamTests : TestBase
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
 
-        var globalLog = await LoadSingleAsync<GlobalEventLog>(database);
+        var globalLog = await LoadSingleAsync<GlobalEventLog>(databaseName);
         
         StreamAssert.EventsCount(stream, 1);
         
@@ -93,9 +90,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithSingleEvent_GlobalLog_AndAggregate()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
             .WithGlobalStreamLogging()
             .Build();
@@ -105,8 +101,8 @@ public class CreateStreamTests : TestBase
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
 
-        var globalLog = await LoadSingleAsync<GlobalEventLog>(database);
-        var aggregate = await LoadSingleAsync<User>(database);
+        var globalLog = await LoadSingleAsync<GlobalEventLog>(databaseName);
+        var aggregate = await LoadSingleAsync<User>(databaseName);
         
         GlobalLogAssert.StreamKey(globalLog, stream.StreamKey);
         
@@ -121,9 +117,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithMultipleEvents_AndGlobalLog()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithGlobalStreamLogging()
             .Build();
         
@@ -144,7 +139,7 @@ public class CreateStreamTests : TestBase
         EventAssert.Version(event1, 1);
         EventAssert.Version(event2, 2);
         
-        var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
+        var globalLogs = await LoadAllAsync<GlobalEventLog>(databaseName);
         
         GlobalLogAssert.LogCount(globalLogs, 2);
         
@@ -163,9 +158,8 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithMultipleEvents_Aggregate_AndGlobalLog()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
             .WithGlobalStreamLogging()
             .Build();
@@ -188,7 +182,7 @@ public class CreateStreamTests : TestBase
         EventAssert.Version(event2, 2);
         EventAssert.Version(event3, 3);
         
-        var aggregate = await LoadSingleAsync<User>(database);
+        var aggregate = await LoadSingleAsync<User>(databaseName);
         
         AggregateAssert.AggregateId(aggregate, stream.AggregateId);
         
@@ -197,7 +191,7 @@ public class CreateStreamTests : TestBase
         Assert.That(aggregate.Role, Is.EqualTo("MEMBER"));
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         
-        var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
+        var globalLogs = await LoadAllAsync<GlobalEventLog>(databaseName);
         
         GlobalLogAssert.LogCount(globalLogs, 3);
         
@@ -217,12 +211,11 @@ public class CreateStreamTests : TestBase
     [Test]
     public async Task CreatesStream_WithProvidedId()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
-        var id = await CreateSemanticId<UserStream>(database, idSuffix:"2025-05");
+        var id = await CreateSemanticId<UserStream>(databaseName, idSuffix:"2025-05");
         
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(id);
         
@@ -235,9 +228,8 @@ public class CreateStreamTests : TestBase
     {
         List<Event> events = null;
         
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
         Assert.ThrowsAsync<ArgumentException>(async () => await eventStore.CreateStreamAndStoreAsync<UserStream>(events));
@@ -249,9 +241,8 @@ public class CreateStreamTests : TestBase
         var event1 = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
         Event event2 = null;
         
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
         var exception = Assert.ThrowsAsync<ArgumentException>(async () => await eventStore.CreateStreamAndStoreAsync<UserStream>(event1, event2));

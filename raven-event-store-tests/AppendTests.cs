@@ -16,12 +16,11 @@ public class AppendTests : TestBase
     {
         const string streamId = "DOES-NOT-EXIST";
         
-        var database = await CreateDatabase();
+        var databaseName = await CreateDatabase();
 
-        await AssertNoDocumentInDb<UserStream>(database, streamId);
+        await AssertNoDocumentInDb<UserStream>(databaseName, streamId);
         
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
         var changedEmail = UserChangedEmailEvent.Create("john@event-sorcerer.io");
@@ -34,9 +33,8 @@ public class AppendTests : TestBase
     {
         Event @event = null;
         
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
         var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
@@ -51,9 +49,8 @@ public class AppendTests : TestBase
         var event1 = UserVerifiedEvent.Create;
         Event event2 = null;
         
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
         var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
@@ -67,19 +64,18 @@ public class AppendTests : TestBase
     [Test]
     public async Task Throws_WhenAppends_ToNonHead()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
-        var sourceStreamId = await CreateSemanticId<UserStream>(database, "2025-04");
+        var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
         var sourceStream = eventStore.CreateStreamAndStore<UserStream>(sourceStreamId, 
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
         
         var sliceStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
         var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStreamId, sliceStreamId, UserVerifiedEvent.Create);
         
-        var sourceStreamFromDbBefore = await LoadAsync<UserStream>(database, sourceStreamId);
+        var sourceStreamFromDbBefore = await LoadAsync<UserStream>(databaseName, sourceStreamId);
         
         StreamAssert.IsNotHead(sourceStreamFromDbBefore);
         StreamAssert.IsHead(sliceStream);
@@ -96,8 +92,8 @@ public class AppendTests : TestBase
             sourceStreamId,
             UserActivatedEvent.Create));
         
-        var sourceStreamFromDbAfter = await LoadAsync<UserStream>(database, sourceStreamId);
-        var sliceStreamFromDbAfter = await LoadAsync<UserStream>(database, sliceStreamId);
+        var sourceStreamFromDbAfter = await LoadAsync<UserStream>(databaseName, sourceStreamId);
+        var sliceStreamFromDbAfter = await LoadAsync<UserStream>(databaseName, sliceStreamId);
         
         StreamAssert.IsNotHead(sourceStreamFromDbAfter);
         StreamAssert.IsHead(sliceStreamFromDbAfter);
@@ -114,9 +110,8 @@ public class AppendTests : TestBase
     [Test]
     public async Task AppendsSingleEventToStream()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
         
         var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
@@ -124,7 +119,7 @@ public class AppendTests : TestBase
         
         await eventStore.AppendAndStoreAsync<UserStream>(stream.Id, UserChangedEmailEvent.Create("alice@event-sorcerer.io"));
         
-        var streamFromDb = await LoadSingleAsync<UserStream>(database);
+        var streamFromDb = await LoadSingleAsync<UserStream>(databaseName);
         
         StreamAssert.Position(streamFromDb, 2);
         StreamAssert.ArchiveNull(streamFromDb);
@@ -141,9 +136,8 @@ public class AppendTests : TestBase
     [Test]
     public async Task AppendsSingleEventToStream_WithGlobalLog()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithGlobalStreamLogging()
             .Build();
         
@@ -152,8 +146,8 @@ public class AppendTests : TestBase
         
         await eventStore.AppendAndStoreAsync<UserStream>(stream.Id, UserChangedEmailEvent.Create("alice@event-sorcerer.io"));
         
-        var streamFromDb = await LoadSingleAsync<UserStream>(database);
-        var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
+        var streamFromDb = await LoadSingleAsync<UserStream>(databaseName);
+        var globalLogs = await LoadAllAsync<GlobalEventLog>(databaseName);
         
         StreamAssert.EventsCount(streamFromDb, 2);
         StreamAssert.Position(streamFromDb, 2);
@@ -174,9 +168,8 @@ public class AppendTests : TestBase
     [Test]
     public async Task AppendsMultipleEvents_WithAggregate_AndGlobalLog()
     {
-        var database = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder()
-            .WithDatabaseName(database)
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
             .WithGlobalStreamLogging()
             .Build();
@@ -190,9 +183,9 @@ public class AppendTests : TestBase
             UserActivatedEvent.Create, 
             UserRoleChangedEvent.Create("ADMIN"));
         
-        var streamFromDb = await LoadSingleAsync<UserStream>(database);
-        var aggregate = await LoadSingleAsync<User>(database);
-        var globalLogs = await LoadAllAsync<GlobalEventLog>(database);
+        var streamFromDb = await LoadSingleAsync<UserStream>(databaseName);
+        var aggregate = await LoadSingleAsync<User>(databaseName);
+        var globalLogs = await LoadAllAsync<GlobalEventLog>(databaseName);
         
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));

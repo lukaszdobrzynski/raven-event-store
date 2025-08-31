@@ -9,33 +9,26 @@ public class ConfigurationTests : TestBase
 {
     [TestCase("")]
     [TestCase(null)]
-    public async Task Throws_WhenEventStoreName_Is(string storeName)
+    public void Throws_WhenEventStoreDatabaseName_Is(string databaseName)
     {
-        var dbName = await CreateDatabase();
-
         Assert.Throws<EventStoreConfigurationException>(() =>
         {
             DocumentStore.AddEventStore(options =>
             {
-                options.DatabaseName = dbName;
-                options.Name = storeName;
+                options.DatabaseName = databaseName;
             });
         });
     }
 
     [Test]
-    public async Task Throws_WhenEventStoreName_IsNotUnique()
+    public void Throws_WhenMultipleEventStores_RegisteredWithSameDatabaseName()
     {
-        var storeName = CreateEventStoreNameUnique();
-        
-        var dbName1 = await CreateDatabase();
-        var dbName2 = await CreateDatabase();
-        var dbName3 = await CreateDatabase();
+        const string dbName1 = "DB-1";
+        const string dbName2 = "DB-1";
         
         DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName1;
-            options.Name = storeName;
         });
         
         Assert.Throws<EventStoreConfigurationException>(() =>
@@ -43,27 +36,13 @@ public class ConfigurationTests : TestBase
             DocumentStore.AddEventStore(options =>
             {
                 options.DatabaseName = dbName2;
-                options.Name = storeName;
-            });
-        });
-        
-        Assert.Throws<EventStoreConfigurationException>(() =>
-        {
-            DocumentStore.AddEventStore(options =>
-            {
-                options.DatabaseName = dbName3;
-                options.Name = storeName;
             });
         });
     }
 
     [Test]
-    public async Task ConfiguresMultipleEventStores_WithUniqueNames_AndUniqueDatabases()
+    public async Task ConfiguresMultipleEventStores_WithUniqueDatabaseNames()
     {
-        var storeName1 = CreateEventStoreNameUnique();
-        var storeName2 = CreateEventStoreNameUnique();
-        var storeName3 = CreateEventStoreNameUnique();
-        
         var dbName1 = await CreateDatabase();
         var dbName2 = await CreateDatabase();
         var dbName3 = await CreateDatabase();
@@ -71,44 +50,39 @@ public class ConfigurationTests : TestBase
         DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName1;
-            options.Name = storeName1;
         });
         
         DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName2;
-            options.Name = storeName2;
         });
         
         DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName3;
-            options.Name = storeName3;
         });
         
-        var store1 = DocumentStore.GetEventStore(storeName1);
-        var store2 = DocumentStore.GetEventStore(storeName2);
-        var store3 = DocumentStore.GetEventStore(storeName3);
+        var store1 = DocumentStore.GetEventStore(dbName1);
+        var store2 = DocumentStore.GetEventStore(dbName2);
+        var store3 = DocumentStore.GetEventStore(dbName3);
         
         Assert.That(store1, Is.Not.Null);
         Assert.That(store2, Is.Not.Null);
         Assert.That(store3, Is.Not.Null);
         
-        Assert.That(store1.Name, Is.EqualTo(storeName1));
-        Assert.That(store2.Name, Is.EqualTo(storeName2));
-        Assert.That(store3.Name, Is.EqualTo(storeName3));
+        Assert.That(store1.DatabaseName, Is.EqualTo(dbName1));
+        Assert.That(store2.DatabaseName, Is.EqualTo(dbName2));
+        Assert.That(store3.DatabaseName, Is.EqualTo(dbName3));
     }
 
     [Test]
     public async Task Throws_WhenSameAggregateType_RegisteredMoreThanOnce()
     {
-        var storeName = CreateEventStoreNameUnique();
         var dbName = await CreateDatabase();
         
         Assert.Throws<EventStoreConfigurationException>(() => DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName;
-            options.Name = storeName;
             options.Aggregates.Register(registry =>
             {
                 registry.Add<User>();
@@ -122,13 +96,11 @@ public class ConfigurationTests : TestBase
     {
         var invalid = typeof(InvalidAggregate);
                 
-        var storeName = CreateEventStoreNameUnique();
         var dbName = await CreateDatabase();
         
         var exception = Assert.Throws<EventStoreConfigurationException>(() => DocumentStore.AddEventStore(options =>
         {
             options.DatabaseName = dbName;
-            options.Name = storeName;
             options.Aggregates.Register(registry =>
             {
                 registry.Add(invalid);
@@ -136,39 +108,5 @@ public class ConfigurationTests : TestBase
         }));
         
         Assert.That(exception.Message, Does.Contain("must inherit from Aggregate<T>"));
-    }
-
-    [Test]
-    public async Task Throws_WhenMultipleEventStores_RegisteredWithSameDatabase()
-    {
-        var dbName = await CreateDatabase();
-        
-        var storeName1 = CreateEventStoreNameUnique();
-        var storeName2 = CreateEventStoreNameUnique();
-        var storeName3 = CreateEventStoreNameUnique();
-        
-        DocumentStore.AddEventStore(options =>
-        {
-            options.DatabaseName = dbName;
-            options.Name = storeName1;
-        });
-        
-        Assert.Throws<EventStoreConfigurationException>(() =>
-        {
-            DocumentStore.AddEventStore(options =>
-            {
-                options.DatabaseName = dbName;
-                options.Name = storeName2;
-            });
-        });
-        
-        Assert.Throws<EventStoreConfigurationException>(() =>
-        {
-            DocumentStore.AddEventStore(options =>
-            {
-                options.DatabaseName = dbName;
-                options.Name = storeName3;
-            });
-        });
     }
 }

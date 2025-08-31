@@ -7,17 +7,15 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public string Name { get; }
-    internal string DatabaseName { get; private set; }
+    public string DatabaseName { get; private set; }
     private bool UseGlobalStreamLogging { get; set; }
     
     private readonly HashSet<Type> _aggregates = [];
     private IDocumentStore DocumentStore { get; }
 
-    internal RavenEventStore(IDocumentStore documentStore, string name)
+    internal RavenEventStore(IDocumentStore documentStore)
     {
         DocumentStore = documentStore;
-        Name = name;
     }
     
     private IAsyncDocumentSession OpenAsyncSession() => DocumentStore.OpenAsyncSession(DatabaseName);

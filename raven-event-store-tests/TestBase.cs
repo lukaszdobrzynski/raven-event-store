@@ -74,8 +74,6 @@ public abstract class TestBase
         return dbName;
     }
     
-    protected static string CreateEventStoreNameUnique() => Guid.NewGuid().ToString();
-
     protected async Task<string> CreateSemanticId<T>(string databaseName, string idSuffix = null)
     {
         var instance = Activator.CreateInstance<T>();
@@ -89,12 +87,9 @@ public abstract class TestBase
         return $"{parts[0]}/{parts[1]}/{nextSuffix}";
     }
 
-    protected RavenEventStoreBuilder InitEventStoreBuilder()
+    protected RavenEventStoreBuilder InitEventStoreBuilder(string databaseName)
     {
-        var name = CreateEventStoreNameUnique();
-        var builder = RavenEventStoreBuilder.Init(DocumentStore)
-            .WithName(name);
-        
+        var builder = RavenEventStoreBuilder.Init(DocumentStore, databaseName);
         return builder;
     }
 
