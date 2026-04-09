@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Raven.EventStore;
 
@@ -13,8 +13,8 @@ public partial class RavenEventStore
             return null;
 
         var instance = stream.Seed is not null
-            ? (Aggregate)JsonConvert.DeserializeObject(
-                JsonConvert.SerializeObject(stream.Seed),
+            ? (Aggregate)JsonSerializer.Deserialize(
+                JsonSerializer.Serialize(stream.Seed, stream.Seed.GetType()),
                 aggregateType)
             : (Aggregate)Activator.CreateInstance(aggregateType);
 
