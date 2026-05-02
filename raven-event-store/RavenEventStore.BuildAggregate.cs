@@ -11,12 +11,12 @@ public partial class RavenEventStore
             return null;
 
         var instance = stream.Seed is not null
-            ? (Aggregate)JsonSerializer.Deserialize(
+            ? (Aggregate<TStream>)JsonSerializer.Deserialize(
                 JsonSerializer.Serialize(stream.Seed, stream.Seed.GetType()),
                 aggregateType)
-            : (Aggregate)Activator.CreateInstance(aggregateType);
+            : (Aggregate<TStream>)Activator.CreateInstance(aggregateType);
 
-        instance.Build(stream);
+        instance.Rebuild(stream);
         instance.StreamKey = stream.StreamKey;
         return instance;
     }
