@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -10,7 +11,7 @@ public partial class RavenEventStore
     public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId,
         params Event[] events) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
+        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList(), CancellationToken.None);
     }
     
     public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, params Event[] events)
@@ -19,9 +20,9 @@ public partial class RavenEventStore
         return HandleSlice<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
     }
     
-    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, IEnumerable<Event> events) where TStream : DocumentStream, new()
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
+        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList(), cancellationToken);
     }
     
     public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, IEnumerable<Event> events)

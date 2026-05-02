@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -7,15 +8,15 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private async Task AppendToGlobalLogAsync(IAsyncDocumentSession session, string streamId, Guid streamKey, List<Event> events)
+    private async Task AppendToGlobalLogAsync(IAsyncDocumentSession session, string streamId, Guid streamKey, List<Event> events, CancellationToken cancellationToken = default)
     {
         if (UseGlobalStreamLogging)
         {
             foreach (var @event in events)
             {
                 var log = CreateGlobalEventLog(streamId, streamKey, @event);
-                await session.StoreAsync(log);
-            }    
+                await session.StoreAsync(log, cancellationToken);
+            }
         }
     }
     

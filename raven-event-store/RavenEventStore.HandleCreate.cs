@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -7,26 +8,26 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private async Task<TStream> HandleCreateAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events)
+    private async Task<TStream> HandleCreateAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events, CancellationToken cancellationToken = default)
         where TStream : DocumentStream, new()
     {
         CheckForNullEvents(events);
-            
+
         AssignVersionToEvents(events, nextVersion: 1);
-            
+
         var stream = CreateStream<TStream>(streamId, events);
 
-        await session.StoreAsync(stream);
+        await session.StoreAsync(stream, cancellationToken);
 
         var aggregate = BuildAggregate(stream);
-            
+
         if (aggregate is not null)
         {
-            await session.StoreAsync(aggregate);
+            await session.StoreAsync(aggregate, cancellationToken);
             stream.AggregateId = aggregate.Id;
         }
-            
-        await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events);
+
+        await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events, cancellationToken);
         return stream;
     }
     

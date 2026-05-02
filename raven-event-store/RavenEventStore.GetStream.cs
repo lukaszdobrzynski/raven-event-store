@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -5,10 +6,10 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public Task<TStream> GetStreamAsync<TStream>(IAsyncDocumentSession session, string streamId)
+    public Task<TStream> GetStreamAsync<TStream>(IAsyncDocumentSession session, string streamId, CancellationToken cancellationToken = default)
         where TStream : DocumentStream
     {
-        return session.LoadAsync<TStream>(streamId);
+        return session.LoadAsync<TStream>(streamId, cancellationToken);
     }
 
     public TStream GetStream<TStream>(IDocumentSession session, string streamId)
@@ -17,12 +18,12 @@ public partial class RavenEventStore
         return session.Load<TStream>(streamId);
     }
 
-    public async Task<TStream> GetStreamAsync<TStream>(string streamId)
+    public async Task<TStream> GetStreamAsync<TStream>(string streamId, CancellationToken cancellationToken = default)
         where TStream : DocumentStream
     {
         using (var session = OpenAsyncSession())
         {
-            return await session.LoadAsync<TStream>(streamId);
+            return await session.LoadAsync<TStream>(streamId, cancellationToken);
         }
     }
 

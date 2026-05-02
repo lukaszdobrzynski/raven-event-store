@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -5,10 +6,10 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public Task<TAggregate> GetAggregateAsync<TAggregate>(IAsyncDocumentSession session, string streamId)
+    public Task<TAggregate> GetAggregateAsync<TAggregate>(IAsyncDocumentSession session, string streamId, CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
     {
-        return HandleGetAggregateAsync<TAggregate>(session, streamId);
+        return HandleGetAggregateAsync<TAggregate>(session, streamId, cancellationToken);
     }
 
     public TAggregate GetAggregate<TAggregate>(IDocumentSession session, string streamId)
@@ -17,12 +18,12 @@ public partial class RavenEventStore
         return HandleGetAggregate<TAggregate>(session, streamId);
     }
 
-    public async Task<TAggregate> GetAggregateAsync<TAggregate>(string streamId)
+    public async Task<TAggregate> GetAggregateAsync<TAggregate>(string streamId, CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
     {
         using (var session = OpenAsyncSession())
         {
-            return await HandleGetAggregateAsync<TAggregate>(session, streamId);
+            return await HandleGetAggregateAsync<TAggregate>(session, streamId, cancellationToken);
         }
     }
 

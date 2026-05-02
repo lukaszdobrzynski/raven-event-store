@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 using Raven.EventStore.Exceptions;
@@ -8,25 +9,25 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private async Task<TStream> HandleSliceAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
+    private async Task<TStream> HandleSliceAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
         CheckForNullEvents(events);
-            
+
         var sourceStream = await session.Include<TStream>(x => x.AggregateId)
-            .LoadAsync(sourceStreamId);
+            .LoadAsync(sourceStreamId, cancellationToken);
 
         if (sourceStream is null)
         {
             throw new NonExistentStreamException(sourceStreamId);
         }
-        
+
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
-            
+
         AssignVersionToEvents(events, sourceStream.Position + 1);
-            
-        var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId);
+
+        var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
         sourceStream.Archive = aggregate;
-        
+
         var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, aggregate, events);
         var newAggregate = BuildAggregate(newStreamSlice);
 
@@ -34,14 +35,14 @@ public partial class RavenEventStore
         {
             var changeVector = session.Advanced.GetChangeVectorFor(aggregate);
             session.Advanced.Evict(aggregate);
-            await session.StoreAsync(newAggregate, changeVector, aggregate.Id);
+            await session.StoreAsync(newAggregate, changeVector, aggregate.Id, cancellationToken);
         }
-            
-        await session.StoreAsync(newStreamSlice);
+
+        await session.StoreAsync(newStreamSlice, cancellationToken);
         sourceStream.NextSliceId = newStreamSlice.Id;
-        await session.StoreAsync(sourceStream);
-        
-        await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
+        await session.StoreAsync(sourceStream, cancellationToken);
+
+        await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events, cancellationToken);
         return newStreamSlice;
     }
     

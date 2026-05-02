@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public async Task AppendAndStoreAsync<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
+    public async Task AppendAndStoreAsync<TStream>(string streamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
+        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false, cancellationToken);
     }
     
     public void AppendAndStore<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
@@ -16,9 +17,9 @@ public partial class RavenEventStore
         AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
     }
     
-    public async Task AppendAndStoreAsyncOptimistically<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
+    public async Task AppendAndStoreAsyncOptimistically<TStream>(string streamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
+        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true, cancellationToken);
     }
     
     public void AppendAndStoreOptimistically<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
@@ -28,7 +29,7 @@ public partial class RavenEventStore
     
     public async Task AppendAndStoreAsync<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
+        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false, CancellationToken.None);
     }
     
     public void AppendAndStore<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
@@ -38,7 +39,7 @@ public partial class RavenEventStore
     
     public async Task AppendAndStoreAsyncOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
+        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true, CancellationToken.None);
     }
     
     public void AppendAndStoreOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
@@ -46,15 +47,15 @@ public partial class RavenEventStore
         AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
     }
     
-    private async Task AppendAndStoreAsync<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream
+    private async Task AppendAndStoreAsync<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default) where TStream : DocumentStream
     {
         CheckForNullEvents(events);
 
         using (var session = OpenAsyncSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
-            await HandleAppendAsync<TStream>(session, streamId, events);
-            await session.SaveChangesAsync();
+            await HandleAppendAsync<TStream>(session, streamId, events, cancellationToken);
+            await session.SaveChangesAsync(cancellationToken);
         }
     }
     

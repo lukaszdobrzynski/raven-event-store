@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
 
@@ -31,17 +32,17 @@ public partial class RavenEventStore
         AppendToGlobalLog(session, streamId, stream.StreamKey, events);
     }
     
-    private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events)
+    private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events, CancellationToken cancellationToken = default)
         where TStream : DocumentStream
     {
         CheckForNullEvents(events);
 
-        var stream = await session.LoadAsync<TStream>(streamId);
+        var stream = await session.LoadAsync<TStream>(streamId, cancellationToken);
 
         CheckForNonExistentStream(stream, streamId);
         CheckForAttemptToAppendToNonHead(stream);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
-        
+
         AddEventsToStream(stream, events);
 
         var aggregate = BuildAggregate(stream);
@@ -49,10 +50,10 @@ public partial class RavenEventStore
         if (aggregate is not null)
         {
             aggregate.Id = stream.AggregateId;
-            await session.StoreAsync(aggregate);
+            await session.StoreAsync(aggregate, cancellationToken);
         }
-         
-        await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events);
+
+        await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events, cancellationToken);
     }
 
     private static void AddEventsToStream<TStream>(TStream stream, List<Event> events) where TStream : DocumentStream
