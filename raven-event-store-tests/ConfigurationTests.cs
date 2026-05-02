@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Raven.Client.Documents;
 using Raven.EventStore.Exceptions;
 using Raven.EventStore.Tests.Aggregates;
 
@@ -108,5 +109,29 @@ public class ConfigurationTests : TestBase
         }));
         
         Assert.That(exception.Message, Does.Contain("must inherit from Aggregate<T>"));
+    }
+
+    [Test]
+    public void SameDatabaseName_CanBeRegistered_OnDifferentDocumentStores()
+    {
+        const string dbName = "db-name";
+        
+        using var store1 = new DocumentStore();
+        store1.Urls = ["http://localhost:8080"];
+        store1.Initialize();
+        
+        using var store2 = new DocumentStore();
+        store2.Urls = ["http://localhost:8080"];
+        store2.Initialize();
+
+        store1.AddEventStore(options => options.DatabaseName = dbName);
+        store2.AddEventStore(options => options.DatabaseName = dbName);
+
+        var eventStore1 = store1.GetEventStore(dbName);
+        var eventStore2 = store2.GetEventStore(dbName);
+
+        Assert.That(eventStore1, Is.Not.Null);
+        Assert.That(eventStore2, Is.Not.Null);
+        Assert.That(eventStore1, Is.Not.SameAs(eventStore2));
     }
 }
