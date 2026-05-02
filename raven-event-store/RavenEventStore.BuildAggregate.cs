@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Text.Json;
 
 namespace Raven.EventStore;
@@ -8,8 +7,7 @@ public partial class RavenEventStore
 {
     private Aggregate BuildAggregate<TStream>(TStream stream) where TStream : DocumentStream
     {
-        var aggregateType = GetAggregateType<TStream>();
-        if (aggregateType == null)
+        if (_aggregatesByStream.TryGetValue(typeof(TStream), out var aggregateType) == false)
             return null;
 
         var instance = stream.Seed is not null
@@ -21,11 +19,5 @@ public partial class RavenEventStore
         instance.Build(stream);
         instance.StreamKey = stream.StreamKey;
         return instance;
-    }
-
-    private Type GetAggregateType<TStream>() where TStream : DocumentStream
-    {
-        var aggregateType = typeof(Aggregate<>).MakeGenericType(typeof(TStream));
-        return _aggregates.SingleOrDefault(x => x.IsSubclassOf(aggregateType));
     }
 }

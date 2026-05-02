@@ -10,7 +10,7 @@ public partial class RavenEventStore
     public string DatabaseName { get; private set; }
     private bool UseGlobalStreamLogging { get; set; }
     
-    private readonly HashSet<Type> _aggregates = [];
+    private readonly Dictionary<Type, Type> _aggregatesByStream = [];
     private IDocumentStore DocumentStore { get; }
 
     internal RavenEventStore(IDocumentStore documentStore)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
@@ -7,11 +7,12 @@ public partial class RavenEventStore
 {
     internal void RegisterAggregate(Type aggregate)
     {
-        if (_aggregates.TryGetValue(aggregate, out _))
-        {
-            throw new EventStoreConfigurationException($"Aggregate of type {aggregate.FullName} is already registered");
-        }
+        var streamType = aggregate.BaseType.GetGenericArguments()[0];
 
-        _aggregates.Add(aggregate);
+        if (_aggregatesByStream.TryGetValue(streamType, out var existing))
+            throw new EventStoreConfigurationException(
+                $"Aggregate of type {existing.FullName} is already registered for stream {streamType.FullName}.");
+
+        _aggregatesByStream[streamType] = aggregate;
     }
 }
