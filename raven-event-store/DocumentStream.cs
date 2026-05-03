@@ -13,7 +13,7 @@ public abstract class DocumentStream
     public int Position => Events.Count != 0 ? Events.Last().Version : 0;
     public DateTime? UpdatedAt { get; internal set; }
     public DateTime CreatedAt { get; internal init; }
-    public Aggregate Seed { get; internal init; }
+    public string SeedId { get; internal set; }
     public Aggregate Archive { get; internal set; }
     public string NextSliceId { get; internal set; }
     public string PreviousSliceId { get; internal init; }

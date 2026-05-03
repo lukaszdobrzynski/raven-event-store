@@ -1,19 +1,16 @@
 using System;
-using System.Text.Json;
 
 namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private Aggregate BuildAggregate<TStream>(TStream stream) where TStream : DocumentStream
+    private Aggregate BuildAggregate<TStream>(TStream stream, Aggregate seed = null) where TStream : DocumentStream
     {
         if (_aggregatesByStream.TryGetValue(typeof(TStream), out var aggregateType) == false)
             return null;
 
-        var instance = stream.Seed is not null
-            ? (Aggregate<TStream>)JsonSerializer.Deserialize(
-                JsonSerializer.Serialize(stream.Seed, stream.Seed.GetType()),
-                aggregateType)
+        var instance = seed is not null
+            ? (Aggregate<TStream>)seed
             : (Aggregate<TStream>)Activator.CreateInstance(aggregateType);
 
         instance.Rebuild(stream);

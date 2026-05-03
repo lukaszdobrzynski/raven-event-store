@@ -228,8 +228,11 @@ public class SliceStreamTests : TestBase
         Assert.That(sliceStream1Archive.Role, Is.EqualTo("ADMIN"));
         Assert.That(sliceStream1Archive.Status, Is.EqualTo("ACTIVATED"));
         
-        var sliceStream1Seed = (User)sliceStream1FromDb.Seed;
-        var sliceStream2Seed = (User)sliceStream2FromDb.Seed;
+        var sliceStream1SeedDoc = await LoadAsync<SliceStreamSeed>(databaseName, sliceStream1FromDb.SeedId);
+        var sliceStream2SeedDoc = await LoadAsync<SliceStreamSeed>(databaseName, sliceStream2FromDb.SeedId);
+
+        var sliceStream1Seed = (User)sliceStream1SeedDoc.State;
+        var sliceStream2Seed = (User)sliceStream2SeedDoc.State;
         
         Assert.That(sliceStream1Seed.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(sliceStream1Seed.Email, Is.EqualTo("john@event-sorcerer.com"));

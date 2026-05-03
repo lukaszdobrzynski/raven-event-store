@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,23 +13,33 @@ public partial class RavenEventStore
     {
         CheckForNullEvents(events);
 
-        var sourceStream = await session.Include<TStream>(x => x.AggregateId)
+        var sourceStream = await session
+            .Include<TStream>(x => x.AggregateId)
+            .Include<TStream>(x => x.SeedId)
             .LoadAsync(sourceStreamId, cancellationToken);
 
         if (sourceStream is null)
-        {
             throw new NonExistentStreamException(sourceStreamId);
-        }
 
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
-
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
         sourceStream.Archive = aggregate;
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, aggregate, events);
-        var newAggregate = BuildAggregate(newStreamSlice);
+        string seedId = null;
+        Aggregate seedForRebuild = null;
+
+        if (aggregate is not null)
+        {
+            var seedDoc = new SliceStreamSeed { State = aggregate };
+            await session.StoreAsync(seedDoc, cancellationToken);
+            seedId = seedDoc.Id;
+            seedForRebuild = AggregateCloner.Clone(aggregate);
+        }
+
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
         {
@@ -45,28 +55,38 @@ public partial class RavenEventStore
         await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events, cancellationToken);
         return newStreamSlice;
     }
-    
+
     private TStream HandleSlice<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
     {
         CheckForNullEvents(events);
-            
-        var sourceStream = session.Include<TStream>(x => x.AggregateId)
+
+        var sourceStream = session
+            .Include<TStream>(x => x.AggregateId)
+            .Include<TStream>(x => x.SeedId)
             .Load(sourceStreamId);
 
         if (sourceStream is null)
-        {
             throw new NonExistentStreamException(sourceStreamId);
-        }
-        
+
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
-            
         AssignVersionToEvents(events, sourceStream.Position + 1);
-            
+
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
         sourceStream.Archive = aggregate;
-            
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, aggregate, events);
-        var newAggregate = BuildAggregate(newStreamSlice);
+
+        string seedId = null;
+        Aggregate seedForRebuild = null;
+
+        if (aggregate is not null)
+        {
+            var seedDoc = new SliceStreamSeed { State = aggregate };
+            session.Store(seedDoc);
+            seedId = seedDoc.Id;
+            seedForRebuild = AggregateCloner.Clone(aggregate);
+        }
+
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
         {
@@ -74,28 +94,26 @@ public partial class RavenEventStore
             session.Advanced.Evict(aggregate);
             session.Store(newAggregate, changeVector, aggregate.Id);
         }
-        
+
         session.Store(newStreamSlice);
         sourceStream.NextSliceId = newStreamSlice.Id;
         session.Store(sourceStream);
-            
+
         AppendToGlobalLog(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
         return newStreamSlice;
     }
 
-    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, Aggregate seed, List<Event> events) where TStream : DocumentStream, new()
+    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events) where TStream : DocumentStream, new()
     {
-        var newStream = new TStream
+        return new TStream
         {
             Id = newStreamId,
             CreatedAt = DateTime.UtcNow,
             Events = events,
             StreamKey = streamKey,
             AggregateId = aggregateId,
-            Seed = seed,
+            SeedId = seedId,
             PreviousSliceId = previousStreamId
         };
-
-        return newStream;
     }
 }

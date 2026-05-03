@@ -13,15 +13,25 @@ public partial class RavenEventStore
     {
         CheckForNullEvents(events);
 
-        var stream = session.Load<TStream>(streamId);
+        var stream = session
+            .Include<TStream>(x => x.SeedId)
+            .Load<TStream>(streamId);
 
         CheckForNonExistentStream(stream, streamId);
         CheckForAttemptToAppendToNonHead(stream);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
         
         AddEventsToStream(stream, events);
+        
+        Aggregate seed = null;
 
-        var aggregate = BuildAggregate(stream);
+        if (stream.SeedId is not null)
+        {
+            var sliceStreamSeed = session.Load<SliceStreamSeed>(stream.SeedId);
+            seed = sliceStreamSeed?.State;
+        }
+
+        var aggregate = BuildAggregate(stream, seed);
 
         if (aggregate is not null)
         {
@@ -37,7 +47,9 @@ public partial class RavenEventStore
     {
         CheckForNullEvents(events);
 
-        var stream = await session.LoadAsync<TStream>(streamId, cancellationToken);
+        var stream = await session
+            .Include<TStream>(x => x.SeedId)
+            .LoadAsync<TStream>(streamId, cancellationToken);
 
         CheckForNonExistentStream(stream, streamId);
         CheckForAttemptToAppendToNonHead(stream);
@@ -45,7 +57,15 @@ public partial class RavenEventStore
 
         AddEventsToStream(stream, events);
 
-        var aggregate = BuildAggregate(stream);
+        Aggregate seed = null;
+
+        if (stream.SeedId is not null)
+        {
+            var sliceStreamSeed = await session.LoadAsync<SliceStreamSeed>(stream.SeedId, cancellationToken);
+            seed = sliceStreamSeed?.State;
+        }
+        
+        var aggregate = BuildAggregate(stream, seed);
 
         if (aggregate is not null)
         {
