@@ -215,8 +215,11 @@ public class SliceStreamTests : TestBase
         StreamAssert.NextSliceId(sliceStream1FromDb, sliceStream2FromDb.Id);
         StreamAssert.NextSliceId(sliceStream2FromDb, null);
         
-        var sourceStreamArchive = (User)sourceStreamFromDb.Archive;
-        var sliceStream1Archive = (User)sliceStream1FromDb.Archive;
+        var sourceStreamArchiveDoc = await LoadAsync<SliceStreamArchive>(databaseName, sourceStreamFromDb.ArchiveId);
+        var sliceStream1ArchiveDoc = await LoadAsync<SliceStreamArchive>(databaseName, sliceStream1FromDb.ArchiveId);
+
+        var sourceStreamArchive = (User)sourceStreamArchiveDoc.State;
+        var sliceStream1Archive = (User)sliceStream1ArchiveDoc.State;
         
         Assert.That(sourceStreamArchive.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(sourceStreamArchive.Email, Is.EqualTo("john@event-sorcerer.com"));

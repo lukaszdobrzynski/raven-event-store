@@ -25,13 +25,16 @@ public partial class RavenEventStore
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
-        sourceStream.Archive = aggregate;
 
         string seedId = null;
         Aggregate seedForRebuild = null;
 
         if (aggregate is not null)
         {
+            var archiveDoc = new SliceStreamArchive { State = aggregate };
+            await session.StoreAsync(archiveDoc, cancellationToken);
+            sourceStream.ArchiveId = archiveDoc.Id;
+
             var seedDoc = new SliceStreamSeed { State = aggregate };
             await session.StoreAsync(seedDoc, cancellationToken);
             seedId = seedDoc.Id;
@@ -72,13 +75,16 @@ public partial class RavenEventStore
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
-        sourceStream.Archive = aggregate;
 
         string seedId = null;
         Aggregate seedForRebuild = null;
 
         if (aggregate is not null)
         {
+            var archiveDoc = new SliceStreamArchive { State = aggregate };
+            session.Store(archiveDoc);
+            sourceStream.ArchiveId = archiveDoc.Id;
+
             var seedDoc = new SliceStreamSeed { State = aggregate };
             session.Store(seedDoc);
             seedId = seedDoc.Id;

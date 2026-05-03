@@ -14,7 +14,7 @@ public abstract class DocumentStream
     public DateTime? UpdatedAt { get; internal set; }
     public DateTime CreatedAt { get; internal init; }
     public string SeedId { get; internal set; }
-    public Aggregate Archive { get; internal set; }
+    public string ArchiveId { get; internal set; }
     public string NextSliceId { get; internal set; }
     public string PreviousSliceId { get; internal init; }
     public bool IsHeadSlice => NextSliceId == null;

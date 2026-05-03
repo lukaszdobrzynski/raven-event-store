@@ -31,9 +31,9 @@ public static class StreamAssert
     
     public static void ArchiveNull<T>(T stream) where T : DocumentStream
     {
-        Assert.That(stream.Archive, Is.Null);   
+        Assert.That(stream.ArchiveId, Is.Null);
     }
-    
+
     public static void SeedNull<T>(T stream) where T : DocumentStream
     {
         Assert.That(stream.SeedId, Is.Null);
@@ -41,7 +41,7 @@ public static class StreamAssert
 
     public static void ArchiveNotNull<T>(T stream) where T : DocumentStream
     {
-        Assert.That(stream.Archive, Is.Not.Null);
+        Assert.That(stream.ArchiveId, Is.Not.Null);
     }
 
     public static void SeedNotNull<T>(T stream) where T : DocumentStream
