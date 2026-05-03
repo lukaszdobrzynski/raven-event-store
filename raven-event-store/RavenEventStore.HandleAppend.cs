@@ -22,30 +22,23 @@ public partial class RavenEventStore
         CheckForAttemptToAppendToNonHead(stream);
         AssignVersionToEvents(events, nextVersion: stream.Position + 1);
 
+        var existingSeed = stream.SeedId is not null
+            ? session.Load<SliceStreamSeed>(stream.SeedId)
+            : null;
+
+        CheckForMissingSeed(existingSeed, stream.Id, stream.SeedId);
+        
         var existingAggregate = stream.AggregateId is not null
             ? session.Load<Aggregate>(stream.AggregateId)
             : null;
 
+        CheckForMissingAggregate(existingAggregate, stream.Id, stream.AggregateId);
+        
         AddEventsToStream(stream, events);
 
-        Aggregate aggregate;
-        
-        if (existingAggregate is not null)
-        {
-            aggregate = ApplyNewEvents(existingAggregate, events);
-        }
-        else
-        {
-            Aggregate seed = null;
-            
-            if (stream.SeedId is not null)
-            {
-                var seedDoc = session.Load<SliceStreamSeed>(stream.SeedId);
-                seed = seedDoc?.State;
-            }
-            
-            aggregate = BuildAggregate(stream, seed);
-        }
+        var aggregate = existingAggregate is not null
+            ? ApplyNewEvents(existingAggregate, events)
+            : BuildAggregate(stream, existingSeed?.State);
 
         if (aggregate is not null)
         {
@@ -74,26 +67,17 @@ public partial class RavenEventStore
             ? await session.LoadAsync<Aggregate>(stream.AggregateId, cancellationToken)
             : null;
 
+        var seedDoc = stream.SeedId is not null
+            ? await session.LoadAsync<SliceStreamSeed>(stream.SeedId, cancellationToken)
+            : null;
+
+        CheckForMissingSeed(seedDoc, stream.Id, stream.SeedId);
+        CheckForMissingAggregate(existingAggregate, stream.Id, stream.AggregateId);
         AddEventsToStream(stream, events);
 
-        Aggregate aggregate;
-        
-        if (existingAggregate is not null)
-        {
-            aggregate = ApplyNewEvents(existingAggregate, events);
-        }
-        else
-        {
-            Aggregate seed = null;
-            
-            if (stream.SeedId is not null)
-            {
-                var seedDoc = await session.LoadAsync<SliceStreamSeed>(stream.SeedId, cancellationToken);
-                seed = seedDoc?.State;
-            }
-            
-            aggregate = BuildAggregate(stream, seed);
-        }
+        var aggregate = existingAggregate is not null
+            ? ApplyNewEvents(existingAggregate, events)
+            : BuildAggregate(stream, seedDoc?.State);
 
         if (aggregate is not null)
         {

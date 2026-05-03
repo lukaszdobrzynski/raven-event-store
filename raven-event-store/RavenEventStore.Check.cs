@@ -37,4 +37,19 @@ public partial class RavenEventStore
             throw new AppendToNotHeadException($"Cannot append to a non-head. " +
                                                $"The stream with the ID {stream.Id} is a parent to an existing slice with the ID {stream.NextSliceId}.");
     }
+
+    private static void CheckForMissingAggregate(Aggregate aggregate, string streamId, string aggregateId)
+    {
+        if (aggregateId is not null && aggregate is null)
+            throw new NonExistentAggregateException(streamId, aggregateId);
+    }
+
+    private static void CheckForMissingSeed(SliceStreamSeed seed, string streamId, string seedId)
+    {
+        if (seedId is not null && seed is null)
+            throw new NonExistentSeedException(streamId, seedId);
+
+        if (seed is not null && seed.State is null)
+            throw new NonExistentSeedException(streamId, seedId, "the seed document exists but contains no state snapshot");
+    }
 }

@@ -108,6 +108,72 @@ public class AppendTests : TestBase
     }
 
     [Test]
+    public async Task Throws_WhenStreamReferencesAggregate_But_AggregateDoesNotExist()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+        
+        var stream = eventStore.CreateStreamAndStore<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+
+        await AssertDocumentExistsInDb<User>(databaseName, stream.AggregateId);
+
+        await Delete(databaseName, stream.AggregateId);
+        
+        Assert.ThrowsAsync<NonExistentAggregateException>(async () => await eventStore.AppendAndStoreAsync<UserStream>(stream.Id, UserActivatedEvent.Create));
+    }
+    
+    [Test]
+    public async Task Throws_WhenStreamReferencesSliceSeed_But_SliceSeedDoesNotExist()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+        
+        var sourceStream = eventStore.CreateStreamAndStore<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+        
+        var nextStreamId = CreateSliceStreamNextId(sourceStream.Id, "2025-05");
+        
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.Id, nextStreamId, UserVerifiedEvent.Create);
+        
+        await AssertDocumentExistsInDb<SliceStreamSeed>(databaseName, sliceStream.SeedId);
+        
+        await Delete(databaseName, sliceStream.SeedId);
+        
+        Assert.ThrowsAsync<NonExistentSeedException>(async () => await eventStore.AppendAndStoreAsync<UserStream>(sliceStream.Id, UserActivatedEvent.Create));
+    }
+
+    [Test]
+    public async Task Throws_WhenStreamReferencesSliceSeed_But_SliceSeedStateIsNull()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+
+        var sourceStream = eventStore.CreateStreamAndStore<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+
+        var nextStreamId = CreateSliceStreamNextId(sourceStream.Id, "2025-05");
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.Id, nextStreamId, UserVerifiedEvent.Create);
+
+        await AssertDocumentExistsInDb<SliceStreamSeed>(databaseName, sliceStream.SeedId);
+
+        var seed = await LoadAsync<SliceStreamSeed>(databaseName, sliceStream.SeedId);
+        seed.State = null;
+        await Store(databaseName, seed);
+        
+        var exception = Assert.ThrowsAsync<NonExistentSeedException>(async () =>
+            await eventStore.AppendAndStoreAsync<UserStream>(sliceStream.Id, UserActivatedEvent.Create));
+        
+        Assert.That(exception.Message, Does.Contain("the seed document exists but contains no state snapshot"));
+    }
+
+    [Test]
     public async Task AppendsSingleEventToStream()
     {
         var databaseName = await CreateDatabase();

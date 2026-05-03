@@ -128,4 +128,31 @@ public abstract class TestBase
             Assert.That(document, Is.Null);
         }
     }
+    
+    protected async Task AssertDocumentExistsInDb<T>(string dbName, string id)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            var document = await session.LoadAsync<T>(id);
+            Assert.That(document, Is.Not.Null);
+        }
+    }
+
+    protected async Task Delete(string dbName, string documentId)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            session.Delete(documentId);
+            await session.SaveChangesAsync();
+        }
+    }
+
+    protected async Task Store(string dbName, object document)
+    {
+        using (var session = DocumentStore.OpenAsyncSession(dbName))
+        {
+            await session.StoreAsync(document);
+            await session.SaveChangesAsync();
+        }
+    }
 }
