@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,5 +45,19 @@ public interface IRavenEventStore
     Task<TAggregate> GetAggregateAsync<TAggregate>(string streamId, CancellationToken cancellationToken = default)
         where TAggregate : Aggregate;
     TAggregate GetAggregate<TAggregate>(string streamId)
+        where TAggregate : Aggregate;
+
+    Task<TAggregate> GetAggregateAtVersionAsync<TAggregate, TStream>(string streamId, int version,
+        CancellationToken cancellationToken = default)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream;
+
+    TAggregate GetAggregateAtVersion<TAggregate, TStream>(string streamId, int version)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream;
+
+    Task<TAggregate> GetAggregateAtAsync<TAggregate>(string streamId, DateTime timestamp, CancellationToken cancellationToken = default)
+        where TAggregate : Aggregate;
+    TAggregate GetAggregateAt<TAggregate>(string streamId, DateTime timestamp)
         where TAggregate : Aggregate;
 }
