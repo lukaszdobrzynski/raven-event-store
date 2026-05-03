@@ -165,6 +165,44 @@ public class SliceStreamTests : TestBase
     }
 
     [Test]
+    public async Task CreatesSliceStream_WithAutoAssignedId()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .Build();
+
+        var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
+
+        var verified = UserVerifiedEvent.Create;
+        var nextStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, verified);
+
+        StreamAssert.IdNotNull(nextStream);
+        Assert.That(nextStream.Id, Is.Not.EqualTo(sourceStream.Id));
+
+        StreamAssert.Key(nextStream, sourceStream.StreamKey);
+        StreamAssert.Position(sourceStream, 1);
+        StreamAssert.Position(nextStream, 2);
+        StreamAssert.EventsCount(sourceStream, 1);
+        StreamAssert.EventsCount(nextStream, 1);
+
+        var sourceStreamFromDb = await LoadAsync<UserStream>(databaseName, sourceStream.Id);
+        var nextStreamFromDb = await LoadAsync<UserStream>(databaseName, nextStream.Id);
+
+        StreamAssert.IsNotHead(sourceStreamFromDb);
+        StreamAssert.IsHead(nextStreamFromDb);
+        StreamAssert.PreviousSliceId(sourceStreamFromDb, null);
+        StreamAssert.NextSliceId(sourceStreamFromDb, nextStream.Id);
+        StreamAssert.PreviousSliceId(nextStreamFromDb, sourceStream.Id);
+        StreamAssert.NextSliceId(nextStreamFromDb, null);
+
+        EventAssert.Version(sourceStream.Events[0], 1);
+        EventAssert.Version(nextStream.Events[0], 2);
+        EventAssert.Type<UserRegisteredEvent>(sourceStream.Events[0]);
+        EventAssert.Type<UserVerifiedEvent>(nextStream.Events[0]);
+    }
+
+    [Test]
     public async Task CreatesSliceStream_WithAggregate()
     {
         var databaseName = await CreateDatabase();

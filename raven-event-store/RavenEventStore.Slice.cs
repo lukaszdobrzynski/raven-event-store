@@ -30,4 +30,28 @@ public partial class RavenEventStore
     {
         return HandleSlice<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
     }
+    
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId,
+        params Event[] events) where TStream : DocumentStream, new()
+    {
+        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList(), CancellationToken.None);
+    }
+
+    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, params Event[] events)
+        where TStream : DocumentStream, new()
+    {
+        return HandleSlice<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList());
+    }
+
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId,
+        IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
+    {
+        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList(), cancellationToken);
+    }
+
+    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, IEnumerable<Event> events)
+        where TStream : DocumentStream, new()
+    {
+        return HandleSlice<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList());
+    }
 }

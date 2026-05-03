@@ -53,6 +53,51 @@ public partial class RavenEventStore
         return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId, events?.ToList(), useOptimisticConcurrency:true);
     }
     
+    public Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId,
+        params Event[] events) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency: false, CancellationToken.None);
+    }
+
+    public Task<TStream> SliceStreamAndStoreAsyncOptimistically<TStream>(string sourceStreamId, params Event[] events) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency: true, CancellationToken.None);
+    }
+
+    public TStream SliceStreamAndStore<TStream>(string sourceStreamId, params Event[] events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency:false);
+    }
+    
+    public TStream SliceStreamAndStoreOptimistically<TStream>(string sourceStreamId, params Event[] events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency:true);
+    }
+    
+    public Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency: false, cancellationToken);
+    }
+
+    public Task<TStream> SliceStreamAndStoreAsyncOptimistically<TStream>(string sourceStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStoreAsync<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency: true, cancellationToken);
+    }
+
+    public TStream SliceStreamAndStore<TStream>(string sourceStreamId, IEnumerable<Event> events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency:false);
+    }
+    
+    public TStream SliceStreamAndStoreOptimistically<TStream>(string sourceStreamId, IEnumerable<Event> events)
+        where TStream : DocumentStream, new()
+    {
+        return SliceStreamAndStore<TStream>(sourceStreamId, newStreamId: null, events?.ToList(), useOptimisticConcurrency:true);
+    }
+    
     private async Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId,
         string newStreamId, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
