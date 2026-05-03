@@ -26,6 +26,8 @@ public partial class RavenEventStore
 
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
 
+        CheckForMissingAggregate(aggregate, sourceStream.Id, sourceStream.AggregateId);
+
         string seedId = null;
         Aggregate seedForRebuild = null;
 
@@ -75,6 +77,8 @@ public partial class RavenEventStore
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
+
+        CheckForMissingAggregate(aggregate, sourceStream.Id, sourceStream.AggregateId);
 
         string seedId = null;
         Aggregate seedForRebuild = null;

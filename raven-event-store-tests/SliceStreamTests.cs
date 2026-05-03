@@ -299,6 +299,24 @@ public class SliceStreamTests : TestBase
     }
 
     [Test]
+    public async Task Throws_WhenSourceStreamReferencesAggregate_But_AggregateDoesNotExist()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+
+        var sourceStream = eventStore.CreateStreamAndStore<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+
+        await AssertDocumentExistsInDb<User>(databaseName, sourceStream.AggregateId);
+        await Delete(databaseName, sourceStream.AggregateId);
+
+        Assert.ThrowsAsync<NonExistentAggregateException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, UserVerifiedEvent.Create));
+    }
+
+    [Test]
     public async Task Throws_WhenSourceStream_IsNotHead()
     {
         var databaseName = await CreateDatabase();
