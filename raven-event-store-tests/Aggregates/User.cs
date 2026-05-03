@@ -11,33 +11,18 @@ public class User : Aggregate<UserStream>
     public string Status { get; set; }
     public string Role { get; set; }
     
-    protected override void Build(UserStream stream)
+    protected override void Apply(Event evt)
     {
-        foreach (var @event in stream.Events)
+        switch (evt)
         {
-            switch (@event)
-            {
-                case UserRegisteredEvent e:
-                    Apply(e);
-                    break;
-                case UserVerifiedEvent e:
-                    Apply(e);
-                    break;
-                case UserActivatedEvent e:
-                    Apply(e);
-                    break;
-                case UserChangedEmailEvent e:
-                    Apply(e);
-                    break;
-                case UserRoleChangedEvent e:
-                    Apply(e);
-                    break;
-                case UserDeactivatedEvent e:
-                    Apply(e);
-                    break;
-                default:
-                    throw new ArgumentException($"Unknown event type: {@event.GetType().Name}");
-            }
+            case UserRegisteredEvent e: Apply(e); break;
+            case UserVerifiedEvent e: Apply(e); break;
+            case UserActivatedEvent e: Apply(e); break;
+            case UserChangedEmailEvent e: Apply(e); break;
+            case UserRoleChangedEvent e: Apply(e); break;
+            case UserDeactivatedEvent e: Apply(e); break;
+            default:
+                throw new ArgumentException($"Unknown event type: {evt.GetType().Name}");
         }
     }
     
