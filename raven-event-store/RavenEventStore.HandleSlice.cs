@@ -15,7 +15,6 @@ public partial class RavenEventStore
 
         var sourceStream = await session
             .Include<TStream>(x => x.AggregateId)
-            .Include<TStream>(x => x.SeedId)
             .LoadAsync(sourceStreamId, cancellationToken);
 
         if (sourceStream is null)
@@ -67,7 +66,6 @@ public partial class RavenEventStore
 
         var sourceStream = session
             .Include<TStream>(x => x.AggregateId)
-            .Include<TStream>(x => x.SeedId)
             .Load(sourceStreamId);
 
         if (sourceStream is null)
