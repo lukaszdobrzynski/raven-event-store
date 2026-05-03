@@ -5,7 +5,7 @@ using Raven.Client.Documents.Session;
 
 namespace Raven.EventStore;
 
-public partial class RavenEventStore
+public partial class RavenEventStore : IRavenEventStore
 {
     public string DatabaseName { get; private set; }
     private bool UseGlobalStreamLogging { get; set; }

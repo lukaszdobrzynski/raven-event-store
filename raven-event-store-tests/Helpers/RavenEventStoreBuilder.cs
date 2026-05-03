@@ -31,7 +31,7 @@ public class RavenEventStoreBuilder
         return this;
     }
     
-    public RavenEventStore Build()
+    public IRavenEventStore Build()
     {
         _documentStore.AddEventStore(options =>
         {

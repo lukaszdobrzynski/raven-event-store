@@ -32,7 +32,7 @@ public static class DocumentStoreExtensions
                                                        $"You cannot configure another event store accessing the same database.");
     }
 
-    public static RavenEventStore GetEventStore(this IDocumentStore documentStore, string databaseName)
+    public static IRavenEventStore GetEventStore(this IDocumentStore documentStore, string databaseName)
     {
         ArgumentNullException.ThrowIfNull(documentStore);
 
