@@ -282,4 +282,19 @@ public class GetAggregateAtVersionTests : TestBase
         Assert.ThrowsAsync<NonExistentStreamException>(async () =>
             await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion));
     }
+
+    [Test]
+    public async Task Throws_WhenAggregateTypeIsNotRegistered()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithNoAggregateRegistered()
+            .Build();
+
+        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+
+        Assert.ThrowsAsync<UnregisteredAggregateTypeException>(async () =>
+            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, 1));
+    }
 }

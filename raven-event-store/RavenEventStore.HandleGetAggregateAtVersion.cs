@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
+using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
 
@@ -14,6 +15,9 @@ public partial class RavenEventStore
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
+        if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
+            throw new UnregisteredAggregateTypeException(typeof(TAggregate));
+
         var stream = await session
             .Include<TStream>(x => x.SeedId)
             .Include<TStream>(x => x.PreviousSliceId)
@@ -83,6 +87,9 @@ public partial class RavenEventStore
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
+        if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
+            throw new UnregisteredAggregateTypeException(typeof(TAggregate));
+
         var stream = session
             .Include<TStream>(x => x.SeedId)
             .Include<TStream>(x => x.PreviousSliceId)

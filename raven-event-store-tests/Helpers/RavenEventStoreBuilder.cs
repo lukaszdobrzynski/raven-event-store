@@ -30,6 +30,12 @@ public class RavenEventStoreBuilder
         Aggregates.Add(aggregate);
         return this;
     }
+
+    public RavenEventStoreBuilder WithNoAggregateRegistered()
+    {
+        Aggregates.Clear();
+        return this;
+    }
     
     public IRavenEventStore Build()
     {
