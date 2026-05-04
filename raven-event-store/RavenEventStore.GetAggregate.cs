@@ -58,14 +58,24 @@ public partial class RavenEventStore
         }
     }
 
-    public Task<TAggregate> GetAggregateAtAsync<TAggregate>(string streamId, DateTime timestamp,
-        CancellationToken cancellationToken = default) where TAggregate : Aggregate
+    public async Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(string streamId, DateTime timestamp,
+        CancellationToken cancellationToken = default)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream
     {
-        throw new NotImplementedException();
+        using (var session = OpenAsyncSession())
+        {
+            return await HandleGetAggregateAtAsync<TAggregate, TStream>(session, streamId, timestamp, cancellationToken);
+        }
     }
 
-    public TAggregate GetAggregateAt<TAggregate>(string streamId, DateTime timestamp) where TAggregate : Aggregate
+    public TAggregate GetAggregateAt<TAggregate, TStream>(string streamId, DateTime timestamp)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream
     {
-        throw new NotImplementedException();
+        using (var session = OpenSession())
+        {
+            return HandleGetAggregateAt<TAggregate, TStream>(session, streamId, timestamp);
+        }
     }
 }

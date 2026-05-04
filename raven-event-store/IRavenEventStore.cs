@@ -56,8 +56,10 @@ public interface IRavenEventStore
         where TAggregate : Aggregate
         where TStream : DocumentStream;
 
-    Task<TAggregate> GetAggregateAtAsync<TAggregate>(string streamId, DateTime timestamp, CancellationToken cancellationToken = default)
-        where TAggregate : Aggregate;
-    TAggregate GetAggregateAt<TAggregate>(string streamId, DateTime timestamp)
-        where TAggregate : Aggregate;
+    Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(string streamId, DateTime timestamp, CancellationToken cancellationToken = default)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream;
+    TAggregate GetAggregateAt<TAggregate, TStream>(string streamId, DateTime timestamp)
+        where TAggregate : Aggregate
+        where TStream : DocumentStream;
 }
