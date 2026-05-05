@@ -312,6 +312,49 @@ public class SliceStreamTests : TestBase
     }
 
     [Test]
+    public async Task SliceStream_BuildsPriorImprints_AfterFirstSlice()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .Build();
+
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create);
+
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id,
+            UserActivatedEvent.Create);
+
+        StreamAssert.SliceImprintsCount(headStream, 1);
+        StreamAssert.SliceImprint(headStream, 0, sourceStream.Id, 1, sourceStream.Events[0].Timestamp);
+    }
+
+    [Test]
+    public async Task SliceStream_AccumulatesPriorImprints_AfterMultipleSlices()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .Build();
+
+        var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create);
+
+        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+            UserActivatedEvent.Create,
+            UserChangedEmailEvent.Create("john@event-sorcerer.io"));
+
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id,
+            UserRoleChangedEvent.Create("ADMIN"));
+
+        StreamAssert.SliceImprintsCount(slice1, 0);
+        StreamAssert.SliceImprintsCount(slice2, 1);
+        StreamAssert.SliceImprintsCount(headStream, 2);
+        StreamAssert.SliceImprint(headStream, 0, slice1.Id, 1, slice1.Events[0].Timestamp);
+        StreamAssert.SliceImprint(headStream, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
+    }
+
+    [Test]
     public async Task Throws_WhenSourceStream_IsNotHead()
     {
         var databaseName = await CreateDatabase();

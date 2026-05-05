@@ -20,9 +20,8 @@ public partial class RavenEventStore
 
         var stream = await session
             .Include<TStream>(x => x.SeedId)
-            .Include<TStream>(x => x.PreviousSliceId)
             .LoadAsync<TStream>(streamId, cancellationToken);
-        
+
         if (stream is null)
             return null;
 
@@ -30,56 +29,43 @@ public partial class RavenEventStore
     }
 
     private static async Task<TAggregate> ReplayToVersionAsync<TAggregate, TStream>(
-        IAsyncDocumentSession session, DocumentStream stream, int version, CancellationToken cancellationToken)
+        IAsyncDocumentSession session, DocumentStream head, int version, CancellationToken cancellationToken)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
-        var events = stream.Events.Where(e => e.Version <= version).ToList();
-
-        if (events.Count == 0)
-        {
-            if (stream.PreviousSliceId is null)
-                return null;
-
-            var previousSlice = await session.LoadAsync<TStream>(stream.PreviousSliceId, cancellationToken);
-            CheckForNonExistentStream(previousSlice, stream.PreviousSliceId);
-            return await ReplayToVersionAsync<TAggregate, TStream>(session, previousSlice, version, cancellationToken);
-        }
-
-        var requestedEventVersionExists = events[^1].Version == version;
-        
-        if (requestedEventVersionExists == false)
+        var targetSlice = await ResolveTargetSliceAsync<TStream>(session, head, version, cancellationToken);
+        if (targetSlice is null)
             return null;
 
-        if (stream.SeedId is not null)
+        var events = targetSlice.Events.Where(e => e.Version <= version).ToList();
+
+        if (events.Count == 0 || events[^1].Version != version)
+            return null;
+
+        if (targetSlice.SeedId is not null)
         {
-            var seed = await session.LoadAsync<SliceStreamSeed>(stream.SeedId, cancellationToken);
-            CheckForMissingSeed(seed, stream.Id, stream.SeedId);
-            return BuildAggregateAtVersion<TAggregate>(stream, events, seed.State);
+            var seed = await session.LoadAsync<SliceStreamSeed>(targetSlice.SeedId, cancellationToken);
+            CheckForMissingSeed(seed, targetSlice.Id, targetSlice.SeedId);
+            return BuildAggregateAtVersion<TAggregate>(targetSlice, events, seed.State);
         }
 
-        if (stream.PreviousSliceId is not null)
-        {
-            var priorEvents = await CollectAllEventsAsync<TStream>(session, stream.PreviousSliceId, cancellationToken);
-            priorEvents.AddRange(events);
-            events = priorEvents;
-        }
-
-        return BuildAggregateAtVersion<TAggregate>(stream, events, null);
+        return BuildAggregateAtVersion<TAggregate>(targetSlice, events);
     }
 
-    private static async Task<List<Event>> CollectAllEventsAsync<TStream>(
-        IAsyncDocumentSession session, string sliceId, CancellationToken cancellationToken) where TStream : DocumentStream
+    private static async Task<DocumentStream> ResolveTargetSliceAsync<TStream>(
+        IAsyncDocumentSession session, DocumentStream head, int version, CancellationToken cancellationToken)
+        where TStream : DocumentStream
     {
-        var slice = await session.LoadAsync<TStream>(sliceId, cancellationToken);
-        CheckForNonExistentStream(slice, sliceId);
+        if (head.Events[0].Version <= version)
+            return head;
 
-        if (slice.PreviousSliceId is null)
-            return [..slice.Events];
+        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstVersion <= version);
+        if (targetIndex < 0)
+            return null;
 
-        var priorEvents = await CollectAllEventsAsync<TStream>(session, slice.PreviousSliceId, cancellationToken);
-        priorEvents.AddRange(slice.Events);
-        return priorEvents;
+        var targetSlice = await session.LoadAsync<TStream>(head.PriorSlices[targetIndex].SliceId, cancellationToken);
+        CheckForNonExistentStream(targetSlice, head.PriorSlices[targetIndex].SliceId);
+        return targetSlice;
     }
 
     private TAggregate HandleGetAggregateAtVersion<TAggregate, TStream>(
@@ -92,7 +78,6 @@ public partial class RavenEventStore
 
         var stream = session
             .Include<TStream>(x => x.SeedId)
-            .Include<TStream>(x => x.PreviousSliceId)
             .Load<TStream>(streamId);
 
         if (stream is null)
@@ -102,57 +87,43 @@ public partial class RavenEventStore
     }
 
     private static TAggregate ReplayToVersion<TAggregate, TStream>(
-        IDocumentSession session, DocumentStream stream, int version)
+        IDocumentSession session, DocumentStream head, int version)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
-        var events = stream.Events.Where(e => e.Version <= version).ToList();
-
-        if (events.Count == 0)
-        {
-            if (stream.PreviousSliceId is null)
-                return null;
-
-            var previousSlice = session.Load<TStream>(stream.PreviousSliceId);
-            CheckForNonExistentStream(previousSlice, stream.PreviousSliceId);
-            return ReplayToVersion<TAggregate, TStream>(session, previousSlice, version);
-        }
-
-        var requestedEventVersionExists = events[^1].Version == version;
-
-        if (requestedEventVersionExists == false)
+        var targetSlice = ResolveTargetSlice<TStream>(session, head, version);
+        if (targetSlice is null)
             return null;
 
-        if (stream.SeedId is not null)
+        var events = targetSlice.Events.Where(e => e.Version <= version).ToList();
+
+        if (events.Count == 0 || events[^1].Version != version)
+            return null;
+
+        if (targetSlice.SeedId is not null)
         {
-            var seed = session.Load<SliceStreamSeed>(stream.SeedId);
-            CheckForMissingSeed(seed, stream.Id, stream.SeedId);
-            return BuildAggregateAtVersion<TAggregate>(stream, events, seed.State);
+            var seed = session.Load<SliceStreamSeed>(targetSlice.SeedId);
+            CheckForMissingSeed(seed, targetSlice.Id, targetSlice.SeedId);
+            return BuildAggregateAtVersion<TAggregate>(targetSlice, events, seed.State);
         }
 
-        if (stream.PreviousSliceId is not null)
-        {
-            var priorEvents = CollectAllEvents<TStream>(session, stream.PreviousSliceId);
-            priorEvents.AddRange(events);
-            events = priorEvents;
-        }
-
-        return BuildAggregateAtVersion<TAggregate>(stream, events, null);
+        return BuildAggregateAtVersion<TAggregate>(targetSlice, events);
     }
 
-    private static List<Event> CollectAllEvents<TStream>(
-        IDocumentSession session, string sliceId)
+    private static DocumentStream ResolveTargetSlice<TStream>(
+        IDocumentSession session, DocumentStream head, int version)
         where TStream : DocumentStream
     {
-        var slice = session.Load<TStream>(sliceId);
-        CheckForNonExistentStream(slice, sliceId);
+        if (head.Events[0].Version <= version)
+            return head;
 
-        if (slice.PreviousSliceId is null)
-            return [..slice.Events];
+        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstVersion <= version);
+        if (targetIndex < 0)
+            return null;
 
-        var priorEvents = CollectAllEvents<TStream>(session, slice.PreviousSliceId);
-        priorEvents.AddRange(slice.Events);
-        return priorEvents;
+        var targetSlice = session.Load<TStream>(head.PriorSlices[targetIndex].SliceId);
+        CheckForNonExistentStream(targetSlice, head.PriorSlices[targetIndex].SliceId);
+        return targetSlice;
     }
 
     private static TAggregate BuildAggregateAtVersion<TAggregate>(

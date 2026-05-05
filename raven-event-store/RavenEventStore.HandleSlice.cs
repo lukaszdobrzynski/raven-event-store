@@ -42,7 +42,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events, BuildPriorSliceImprints(sourceStream));
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
@@ -93,7 +93,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events, BuildPriorSliceImprints(sourceStream));
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
@@ -111,7 +111,7 @@ public partial class RavenEventStore
         return newStreamSlice;
     }
 
-    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events) where TStream : DocumentStream, new()
+    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events, List<SliceImprint> priorSlices) where TStream : DocumentStream, new()
     {
         return new TStream
         {
@@ -121,7 +121,19 @@ public partial class RavenEventStore
             StreamKey = streamKey,
             AggregateId = aggregateId,
             SeedId = seedId,
-            PreviousSliceId = previousStreamId
+            PreviousSliceId = previousStreamId,
+            PriorSlices = priorSlices
         };
+    }
+
+    private static List<SliceImprint> BuildPriorSliceImprints(DocumentStream sourceStream)
+    {
+        var imprint = new SliceImprint
+        {
+            SliceId = sourceStream.Id,
+            FirstVersion = sourceStream.Events[0].Version,
+            FirstTimestamp = sourceStream.Events[0].Timestamp
+        };
+        return [..sourceStream.PriorSlices, imprint];
     }
 }

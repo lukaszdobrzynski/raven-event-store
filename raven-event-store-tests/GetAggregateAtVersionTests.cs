@@ -136,7 +136,7 @@ public class GetAggregateAtVersionTests : TestBase
     }
 
     [Test]
-    public async Task GetsAggregate_CurrentVersion_SingleStreamWithThreeEvents()
+    public async Task GetsAggregate_VersionThree_SingleStreamWithThreeEvents()
     {
         const int aggregateAtVersion = 3;
 
@@ -158,7 +158,7 @@ public class GetAggregateAtVersionTests : TestBase
     }
 
     [Test]
-    public async Task GetsAggregate_AtVersion_InCurrentSlice_WithSeed()
+    public async Task GetsAggregate_AtVersion_InCurrentSlice()
     {
         const int aggregateAtVersion = 3;
 
@@ -184,7 +184,7 @@ public class GetAggregateAtVersionTests : TestBase
     }
 
     [Test]
-    public async Task GetsAggregate_AtVersion_InPreviousSlice_WithSeed()
+    public async Task GetsAggregate_AtVersion_InPreviousSlice()
     {
         const int aggregateAtVersion = 3;
 
@@ -213,7 +213,7 @@ public class GetAggregateAtVersionTests : TestBase
     }
 
     [Test]
-    public async Task GetsAggregate_AtVersion_InEarliestSlice_NoSeed()
+    public async Task GetsAggregate_AtVersion_InEarliestSlice()
     {
         const int aggregateAtVersion = 1;
 

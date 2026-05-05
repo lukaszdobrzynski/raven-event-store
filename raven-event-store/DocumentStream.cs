@@ -18,4 +18,5 @@ public abstract class DocumentStream
     public string NextSliceId { get; internal set; }
     public string PreviousSliceId { get; internal init; }
     public bool IsHeadSlice => NextSliceId == null;
+    public List<SliceImprint> PriorSlices { get; internal set; } = [];
 }
