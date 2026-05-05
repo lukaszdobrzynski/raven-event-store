@@ -11,7 +11,7 @@ public partial class RavenEventStore
     private async Task<TStream> HandleCreateAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events, CancellationToken cancellationToken = default)
         where TStream : DocumentStream, new()
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
 
         AssignVersionToEvents(events, nextVersion: 1);
 
@@ -34,7 +34,7 @@ public partial class RavenEventStore
     private TStream HandleCreate<TStream>(IDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream, new()
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
             
         AssignVersionToEvents(events, nextVersion: 1);
             

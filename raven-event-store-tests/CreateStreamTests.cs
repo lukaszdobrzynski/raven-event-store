@@ -12,23 +12,14 @@ namespace Raven.EventStore.Tests;
 public class CreateStreamTests : TestBase
 {
     [Test]
-    public async Task CreatesStream_WhenNoEvents()
+    public async Task Throws_WhenEmptyEvents()
     {
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
-        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>();
-        
-        StreamAssert.NotNull(stream);
-        StreamAssert.KeyNotEmpty(stream);
-        StreamAssert.Position(stream, 0);
-        
-        StreamAssert.IdNotNull(stream);
-        StreamAssert.AggregateIdNull(stream);
-        
-        StreamAssert.ArchiveNull(stream);
-        StreamAssert.SeedNull(stream);
+        Assert.ThrowsAsync<ArgumentException>(async () => 
+            await eventStore.CreateStreamAndStoreAsync<UserStream>(new List<Event>()));
     }
 
     [Test]
@@ -217,7 +208,7 @@ public class CreateStreamTests : TestBase
         
         var id = await CreateSemanticId<UserStream>(databaseName, idSuffix:"2025-05");
         
-        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(id);
+        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(id, UserActivatedEvent.Create);
         
         Assert.That(stream.Id, Is.EqualTo(id));
         Assert.That(stream.Id, Does.EndWith("2025-05"));

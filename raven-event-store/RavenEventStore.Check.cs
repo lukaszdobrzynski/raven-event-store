@@ -6,10 +6,13 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private static void CheckForNullEvents(List<Event> events)
+    private static void CheckForNullOrEmptyEvents(List<Event> events)
     {
         if (events is null) 
             throw new ArgumentException("Events cannot be null.");
+        
+        if (events.Count == 0) 
+            throw new ArgumentException("Events cannot be empty.");
 
         var nullIndex = events.FindIndex(e => e is null);
         

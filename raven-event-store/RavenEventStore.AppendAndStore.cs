@@ -49,7 +49,7 @@ public partial class RavenEventStore
     
     private async Task AppendAndStoreAsync<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default) where TStream : DocumentStream
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
 
         using (var session = OpenAsyncSession())
         {
@@ -61,7 +61,7 @@ public partial class RavenEventStore
     
     private void AppendAndStore<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
 
         using (var session = OpenSession())
         {

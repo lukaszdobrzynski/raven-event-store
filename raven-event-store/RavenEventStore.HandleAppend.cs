@@ -11,7 +11,7 @@ public partial class RavenEventStore
     private void HandleAppend<TStream>(IDocumentSession session, string streamId, List<Event> events)
         where TStream : DocumentStream
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
 
         var stream = session
             .Include<TStream>(x => x.SeedId)
@@ -52,7 +52,7 @@ public partial class RavenEventStore
     private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events, CancellationToken cancellationToken = default)
         where TStream : DocumentStream
     {
-        CheckForNullEvents(events);
+        CheckForNullOrEmptyEvents(events);
 
         var stream = await session
             .Include<TStream>(x => x.SeedId)
