@@ -27,6 +27,9 @@ public partial class RavenEventStore
             stream.AggregateId = aggregate.Id;
         }
 
+        var pointer = HeadStreamPointer.Create(stream.StreamKey, stream.Id);
+        await session.StoreAsync(pointer, cancellationToken);
+
         await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events, cancellationToken);
         return stream;
     }
@@ -43,13 +46,16 @@ public partial class RavenEventStore
         session.Store(stream);
 
         var aggregate = BuildAggregate(stream);
-            
+
         if (aggregate is not null)
         {
             session.Store(aggregate);
             stream.AggregateId = aggregate.Id;
         }
-            
+
+        var pointer = HeadStreamPointer.Create(stream.StreamKey, stream.Id);
+        session.Store(pointer);
+
         AppendToGlobalLog(session, stream.Id, stream.StreamKey, events);
         return stream;
     }

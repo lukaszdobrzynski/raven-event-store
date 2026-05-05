@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Raven.EventStore.Exceptions;
 using Raven.EventStore.Tests.Aggregates;
@@ -13,16 +14,14 @@ public class GetAggregateAtVersionTests : TestBase
     [Test]
     public async Task ReturnsNull_WhenStreamDoesNotExist()
     {
-        const string notExistsStreamId = "not-exists-stream-id";
+        var notExistsStreamKey = Guid.NewGuid();
 
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
             .Build();
-        
-        await AssertNoDocumentInDb<User>(databaseName, notExistsStreamId);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(notExistsStreamId, 1);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(notExistsStreamKey, 1);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -40,7 +39,7 @@ public class GetAggregateAtVersionTests : TestBase
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -62,7 +61,7 @@ public class GetAggregateAtVersionTests : TestBase
         
         StreamAssert.Position(stream, 3);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -83,7 +82,7 @@ public class GetAggregateAtVersionTests : TestBase
         StreamAssert.Position(sourceStream, 1);
         StreamAssert.Position(sliceStream, 2);
         
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(sourceStream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(sourceStream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -105,7 +104,7 @@ public class GetAggregateAtVersionTests : TestBase
         
         StreamAssert.Position(stream, 3);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -130,7 +129,7 @@ public class GetAggregateAtVersionTests : TestBase
         
         StreamAssert.Position(stream, 3);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Status, Is.EqualTo("VERIFIED"));
     }
@@ -152,7 +151,7 @@ public class GetAggregateAtVersionTests : TestBase
 
         StreamAssert.Position(stream, 3);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
     }
@@ -177,7 +176,7 @@ public class GetAggregateAtVersionTests : TestBase
 
         StreamAssert.Position(headStream, 4);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -206,7 +205,7 @@ public class GetAggregateAtVersionTests : TestBase
 
         StreamAssert.Position(headStream, 5);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -231,7 +230,7 @@ public class GetAggregateAtVersionTests : TestBase
 
         StreamAssert.Position(headStream, 3);
 
-        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion);
+        var aggregate = await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.StreamKey, aggregateAtVersion);
 
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(aggregate.Status, Is.EqualTo("REGISTERED"));
@@ -257,7 +256,7 @@ public class GetAggregateAtVersionTests : TestBase
         await Delete(databaseName, headStream.SeedId);
 
         Assert.ThrowsAsync<NonExistentSeedException>(async () =>
-            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion));
+            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.StreamKey, aggregateAtVersion));
     }
 
     [Test]
@@ -280,7 +279,7 @@ public class GetAggregateAtVersionTests : TestBase
         await Delete(databaseName, headStream.PreviousSliceId);
 
         Assert.ThrowsAsync<NonExistentStreamException>(async () =>
-            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.Id, aggregateAtVersion));
+            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(headStream.StreamKey, aggregateAtVersion));
     }
 
     [Test]
@@ -295,6 +294,6 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
 
         Assert.ThrowsAsync<UnregisteredAggregateTypeException>(async () =>
-            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.Id, 1));
+            await eventStore.GetAggregateAtVersionAsync<User, UserStream>(stream.StreamKey, 1));
     }
 }

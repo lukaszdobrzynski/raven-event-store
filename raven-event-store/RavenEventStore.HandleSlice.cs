@@ -23,6 +23,7 @@ public partial class RavenEventStore
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
+        var pointer = await session.LoadAsync<HeadStreamPointer>(HeadStreamPointer.GetId(sourceStream.StreamKey), cancellationToken);
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
 
         CheckForMissingAggregate(aggregate, sourceStream.Id, sourceStream.AggregateId);
@@ -54,6 +55,7 @@ public partial class RavenEventStore
 
         await session.StoreAsync(newStreamSlice, cancellationToken);
         sourceStream.NextSliceId = newStreamSlice.Id;
+        pointer.HeadStreamId = newStreamSlice.Id;
         await session.StoreAsync(sourceStream, cancellationToken);
 
         await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events, cancellationToken);
@@ -73,6 +75,8 @@ public partial class RavenEventStore
 
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
+
+        var pointer = session.Load<HeadStreamPointer>(HeadStreamPointer.GetId(sourceStream.StreamKey));
 
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
 
@@ -105,6 +109,7 @@ public partial class RavenEventStore
 
         session.Store(newStreamSlice);
         sourceStream.NextSliceId = newStreamSlice.Id;
+        pointer.HeadStreamId = newStreamSlice.Id;
         session.Store(sourceStream);
 
         AppendToGlobalLog(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);

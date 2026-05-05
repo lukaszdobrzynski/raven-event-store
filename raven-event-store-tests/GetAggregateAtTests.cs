@@ -13,16 +13,14 @@ public class GetAggregateAtTests : TestBase
     [Test]
     public async Task ReturnsNull_WhenStreamDoesNotExist()
     {
-        const string notExistsStreamId = "not-exists-stream-id";
+        var notExistsStreamKey = Guid.NewGuid();
 
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
             .Build();
 
-        await AssertNoDocumentInDb<User>(databaseName, notExistsStreamId);
-
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(notExistsStreamId, DateTime.UtcNow);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(notExistsStreamKey, DateTime.UtcNow);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -43,7 +41,7 @@ public class GetAggregateAtTests : TestBase
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(@event);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate, Is.Null);
     }
@@ -72,7 +70,7 @@ public class GetAggregateAtTests : TestBase
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent, activatedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -104,7 +102,7 @@ public class GetAggregateAtTests : TestBase
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent, activatedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Status, Is.EqualTo("VERIFIED"));
     }
@@ -133,7 +131,7 @@ public class GetAggregateAtTests : TestBase
 
         var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent, activatedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(stream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
     }
@@ -167,7 +165,7 @@ public class GetAggregateAtTests : TestBase
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
         var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, activatedEvent, changedEmailEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -207,7 +205,7 @@ public class GetAggregateAtTests : TestBase
         var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent, changedEmailEvent);
         var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id, roleChangedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Status, Is.EqualTo("ACTIVATED"));
         Assert.That(aggregate.Email, Is.EqualTo("john@event-sorcerer.com"));
@@ -238,7 +236,7 @@ public class GetAggregateAtTests : TestBase
         var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
         var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate.Username, Is.EqualTo("event-sorcerer"));
         Assert.That(aggregate.Status, Is.EqualTo("REGISTERED"));
@@ -272,7 +270,7 @@ public class GetAggregateAtTests : TestBase
         await Delete(databaseName, headStream.SeedId);
 
         Assert.ThrowsAsync<NonExistentSeedException>(async () =>
-            await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp));
+            await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp));
     }
 
     [Test]
@@ -303,7 +301,7 @@ public class GetAggregateAtTests : TestBase
         await Delete(databaseName, headStream.PreviousSliceId);
 
         Assert.ThrowsAsync<NonExistentStreamException>(async () =>
-            await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp));
+            await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp));
     }
 
     [Test]
@@ -318,7 +316,7 @@ public class GetAggregateAtTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
 
         Assert.ThrowsAsync<UnregisteredAggregateTypeException>(async () =>
-            await eventStore.GetAggregateAtAsync<User, UserStream>(stream.Id, DateTime.UtcNow));
+            await eventStore.GetAggregateAtAsync<User, UserStream>(stream.StreamKey, DateTime.UtcNow));
     }
 
     [Test]
@@ -342,7 +340,7 @@ public class GetAggregateAtTests : TestBase
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent);
         var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, verifiedEvent);
 
-        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.Id, queryTimestamp);
+        var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
         Assert.That(aggregate, Is.Null);
     }

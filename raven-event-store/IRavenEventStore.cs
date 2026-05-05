@@ -47,19 +47,19 @@ public interface IRavenEventStore
     TAggregate GetAggregate<TAggregate>(string streamId)
         where TAggregate : Aggregate;
 
-    Task<TAggregate> GetAggregateAtVersionAsync<TAggregate, TStream>(string streamId, int version,
+    Task<TAggregate> GetAggregateAtVersionAsync<TAggregate, TStream>(Guid streamKey, int version,
         CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
         where TStream : DocumentStream;
 
-    TAggregate GetAggregateAtVersion<TAggregate, TStream>(string streamId, int version)
+    TAggregate GetAggregateAtVersion<TAggregate, TStream>(Guid streamKey, int version)
         where TAggregate : Aggregate
         where TStream : DocumentStream;
 
-    Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(string streamId, DateTime timestamp, CancellationToken cancellationToken = default)
+    Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(Guid streamKey, DateTime timestamp, CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
         where TStream : DocumentStream;
-    TAggregate GetAggregateAt<TAggregate, TStream>(string streamId, DateTime timestamp)
+    TAggregate GetAggregateAt<TAggregate, TStream>(Guid streamKey, DateTime timestamp)
         where TAggregate : Aggregate
         where TStream : DocumentStream;
 }

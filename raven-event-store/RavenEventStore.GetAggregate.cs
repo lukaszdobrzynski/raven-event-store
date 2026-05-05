@@ -37,45 +37,45 @@ public partial class RavenEventStore
         }
     }
 
-    public async Task<TAggregate> GetAggregateAtVersionAsync<TAggregate, TStream>(string streamId, int version,
+    public async Task<TAggregate> GetAggregateAtVersionAsync<TAggregate, TStream>(Guid streamKey, int version,
         CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         using (var session = OpenAsyncSession())
         {
-            return await HandleGetAggregateAtVersionAsync<TAggregate, TStream>(session, streamId, version, cancellationToken);
+            return await HandleGetAggregateAtVersionAsync<TAggregate, TStream>(session, streamKey, version, cancellationToken);
         }
     }
 
-    public TAggregate GetAggregateAtVersion<TAggregate, TStream>(string streamId, int version)
+    public TAggregate GetAggregateAtVersion<TAggregate, TStream>(Guid streamKey, int version)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         using (var session = OpenSession())
         {
-            return HandleGetAggregateAtVersion<TAggregate, TStream>(session, streamId, version);
+            return HandleGetAggregateAtVersion<TAggregate, TStream>(session, streamKey, version);
         }
     }
 
-    public async Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(string streamId, DateTime timestamp,
+    public async Task<TAggregate> GetAggregateAtAsync<TAggregate, TStream>(Guid streamKey, DateTime timestamp,
         CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         using (var session = OpenAsyncSession())
         {
-            return await HandleGetAggregateAtAsync<TAggregate, TStream>(session, streamId, timestamp, cancellationToken);
+            return await HandleGetAggregateAtAsync<TAggregate, TStream>(session, streamKey, timestamp, cancellationToken);
         }
     }
 
-    public TAggregate GetAggregateAt<TAggregate, TStream>(string streamId, DateTime timestamp)
+    public TAggregate GetAggregateAt<TAggregate, TStream>(Guid streamKey, DateTime timestamp)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         using (var session = OpenSession())
         {
-            return HandleGetAggregateAt<TAggregate, TStream>(session, streamId, timestamp);
+            return HandleGetAggregateAt<TAggregate, TStream>(session, streamKey, timestamp);
         }
     }
 }

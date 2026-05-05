@@ -10,21 +10,26 @@ namespace Raven.EventStore;
 public partial class RavenEventStore
 {
     private async Task<TAggregate> HandleGetAggregateAtAsync<TAggregate, TStream>(
-        IAsyncDocumentSession session, string streamId, DateTime timestamp, CancellationToken cancellationToken = default)
+        IAsyncDocumentSession session, Guid streamKey, DateTime timestamp, CancellationToken cancellationToken = default)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
             throw new UnregisteredAggregateTypeException(typeof(TAggregate));
 
-        var stream = await session
-            .Include<TStream>(x => x.SeedId)
-            .LoadAsync<TStream>(streamId, cancellationToken);
+        var pointer = await session
+            .Include<HeadStreamPointer>(x => x.HeadStreamId)
+            .LoadAsync<HeadStreamPointer>(HeadStreamPointer.GetId(streamKey), cancellationToken);
 
-        if (stream is null)
+        if (pointer is null)
             return null;
 
-        return await ReplayToTimestampAsync<TAggregate, TStream>(session, stream, timestamp, cancellationToken);
+        var head = await session.LoadAsync<TStream>(pointer.HeadStreamId, cancellationToken);
+
+        if (head is null)
+            return null;
+
+        return await ReplayToTimestampAsync<TAggregate, TStream>(session, head, timestamp, cancellationToken);
     }
 
     private static async Task<TAggregate> ReplayToTimestampAsync<TAggregate, TStream>(
@@ -68,21 +73,26 @@ public partial class RavenEventStore
     }
 
     private TAggregate HandleGetAggregateAt<TAggregate, TStream>(
-        IDocumentSession session, string streamId, DateTime timestamp)
+        IDocumentSession session, Guid streamKey, DateTime timestamp)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
         if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
             throw new UnregisteredAggregateTypeException(typeof(TAggregate));
 
-        var stream = session
-            .Include<TStream>(x => x.SeedId)
-            .Load<TStream>(streamId);
+        var pointer = session
+            .Include<HeadStreamPointer>(x => x.HeadStreamId)
+            .Load<HeadStreamPointer>(HeadStreamPointer.GetId(streamKey));
 
-        if (stream is null)
+        if (pointer is null)
             return null;
 
-        return ReplayToTimestamp<TAggregate, TStream>(session, stream, timestamp);
+        var head = session.Load<TStream>(pointer.HeadStreamId);
+
+        if (head is null)
+            return null;
+
+        return ReplayToTimestamp<TAggregate, TStream>(session, head, timestamp);
     }
 
     private static TAggregate ReplayToTimestamp<TAggregate, TStream>(
