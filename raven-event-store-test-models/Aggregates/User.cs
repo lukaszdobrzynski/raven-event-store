@@ -1,8 +1,9 @@
-﻿using System;
-using Raven.EventStore.Tests.Events;
-using Raven.EventStore.Tests.Streams;
+using System;
+using Raven.EventStore;
+using RavenEventStoreTestModels.Events;
+using RavenEventStoreTestModels.Streams;
 
-namespace Raven.EventStore.Tests.Aggregates;
+namespace RavenEventStoreTestModels.Aggregates;
 
 public class User : Aggregate<UserStream>
 {

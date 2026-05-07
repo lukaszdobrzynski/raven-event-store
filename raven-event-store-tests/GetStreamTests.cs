@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Raven.EventStore.Tests.Asserts;
-using Raven.EventStore.Tests.Events;
-using Raven.EventStore.Tests.Streams;
+using RavenEventStoreTestModels.Events;
+using RavenEventStoreTestModels.Streams;
 
 namespace Raven.EventStore.Tests;
 

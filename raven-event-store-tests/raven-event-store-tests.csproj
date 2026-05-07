@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\raven-event-store\raven-event-store.csproj" />
+      <ProjectReference Include="..\raven-event-store-test-models\raven-event-store-test-models.csproj" />
     </ItemGroup>
 
 </Project>

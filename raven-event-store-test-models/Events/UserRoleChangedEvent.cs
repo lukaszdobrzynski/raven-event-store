@@ -1,6 +1,7 @@
-﻿using System;
+using System;
+using Raven.EventStore;
 
-namespace Raven.EventStore.Tests.Events;
+namespace RavenEventStoreTestModels.Events;
 
 public class UserRoleChangedEvent : Event
 {

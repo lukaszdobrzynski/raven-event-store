@@ -12,3 +12,5 @@ bld/
 
 .idea/
 *.DotSettings.user
+
+**/BenchmarkDotNet.Artifacts/

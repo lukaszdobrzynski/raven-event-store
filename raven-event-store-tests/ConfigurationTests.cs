@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Raven.Client.Documents;
 using Raven.EventStore.Exceptions;
 using Raven.EventStore.Tests.Aggregates;
+using RavenEventStoreTestModels.Aggregates;
 
 namespace Raven.EventStore.Tests;
 
