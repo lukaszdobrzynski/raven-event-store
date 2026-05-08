@@ -3,11 +3,12 @@ using System.Collections.Generic;
 
 namespace Raven.EventStore;
 
-public class SliceImprint
+[method: Newtonsoft.Json.JsonConstructor]
+public readonly struct SliceImprint(string sliceId, int firstVersion, DateTime firstTimestamp)
 {
-    public string SliceId { get; init; }
-    public int FirstVersion { get; init; }
-    public DateTime FirstTimestamp { get; init; }
+    public string SliceId { get; init; } = sliceId;
+    public int FirstVersion { get; init; } = firstVersion;
+    public DateTime FirstTimestamp { get; init; } = firstTimestamp;
 
     private static readonly IComparer<SliceImprint> ByTimestamp =
         Comparer<SliceImprint>.Create((a, b) => a.FirstTimestamp.CompareTo(b.FirstTimestamp));

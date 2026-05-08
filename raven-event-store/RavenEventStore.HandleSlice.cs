@@ -133,12 +133,19 @@ public partial class RavenEventStore
 
     private static List<SliceImprint> BuildPriorSliceImprints(DocumentStream sourceStream)
     {
-        var imprint = new SliceImprint
-        {
-            SliceId = sourceStream.Id,
-            FirstVersion = sourceStream.Events[0].Version,
-            FirstTimestamp = sourceStream.Events[0].Timestamp
-        };
-        return [..sourceStream.PriorSlices, imprint];
+        var imprint = new SliceImprint(
+            sourceStream.Id,
+            sourceStream.Events[0].Version,
+            sourceStream.Events[0].Timestamp
+        );
+        return PassOwnership(sourceStream, imprint);
+    }
+
+    private static List<SliceImprint> PassOwnership(DocumentStream sourceStream, SliceImprint newImprint)
+    {
+        var priorSlices = sourceStream.PriorSlices;
+        priorSlices.Add(newImprint);
+        sourceStream.PriorSlices = [];
+        return priorSlices;
     }
 }

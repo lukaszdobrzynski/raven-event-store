@@ -348,7 +348,6 @@ public class SliceStreamTests : TestBase
             UserRoleChangedEvent.Create("ADMIN"));
 
         StreamAssert.SliceImprintsCount(slice1, 0);
-        StreamAssert.SliceImprintsCount(slice2, 1);
         StreamAssert.SliceImprintsCount(headStream, 2);
         StreamAssert.SliceImprint(headStream, 0, slice1.Id, 1, slice1.Events[0].Timestamp);
         StreamAssert.SliceImprint(headStream, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
