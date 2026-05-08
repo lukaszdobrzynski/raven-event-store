@@ -62,8 +62,8 @@ public partial class RavenEventStore
     {
         if (head.Events[0].Timestamp <= timestamp)
             return head;
-
-        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstTimestamp <= timestamp);
+        
+        var targetIndex = SliceImprint.SearchByTimestamp(head.PriorSlices, timestamp);
         if (targetIndex < 0)
             return null;
 
@@ -126,7 +126,7 @@ public partial class RavenEventStore
         if (head.Events[0].Timestamp <= timestamp)
             return head;
 
-        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstTimestamp <= timestamp);
+        var targetIndex = SliceImprint.SearchByTimestamp(head.PriorSlices, timestamp);
         if (targetIndex < 0)
             return null;
 

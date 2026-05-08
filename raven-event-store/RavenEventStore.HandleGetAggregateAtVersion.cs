@@ -64,7 +64,7 @@ public partial class RavenEventStore
         if (head.Events[0].Version <= version)
             return head;
 
-        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstVersion <= version);
+        var targetIndex = SliceImprint.SearchByVersion(head.PriorSlices, version);
         if (targetIndex < 0)
             return null;
 
@@ -127,7 +127,7 @@ public partial class RavenEventStore
         if (head.Events[0].Version <= version)
             return head;
 
-        var targetIndex = head.PriorSlices.FindLastIndex(e => e.FirstVersion <= version);
+        var targetIndex = SliceImprint.SearchByVersion(head.PriorSlices, version);
         if (targetIndex < 0)
             return null;
 
