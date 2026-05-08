@@ -37,4 +37,24 @@ public class StreamFactory(IRavenEventStore eventStore)
             .Select(i => UserEventGenerators[i % UserEventGenerators.Count]())
             .ToArray();
     }
+
+    public UserStream CreateUserStream(int eventsPerSlice, int sliceCount, Func<int, DateTime> timestampSelector)
+    {
+        var eventIndex = 0;
+        var stream = eventStore.CreateStreamAndStore<UserStream>(GenerateBatch());
+
+        for (var i = 0; i < sliceCount; i++)
+            stream = eventStore.SliceStreamAndStore<UserStream>(stream.Id, GenerateBatch());
+
+        return stream;
+
+        Event[] GenerateBatch() => Enumerable.Range(0, eventsPerSlice)
+            .Select(_ =>
+            {
+                var e = UserEventGenerators[eventIndex % UserEventGenerators.Count]();
+                e.Timestamp = timestampSelector(eventIndex++);
+                return e;
+            })
+            .ToArray();
+    }
 }

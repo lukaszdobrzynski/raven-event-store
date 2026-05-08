@@ -12,10 +12,10 @@ public class VersionTraversal : RavenEventStoreBenchmarkBase
 
     private const int TargetSlice = 2;
     
-    [Params(1000)]
+    [Params(10, 50, 100, 1000)]
     public int EventsPerSlice { get; set; }
 
-    [Params(1000)]
+    [Params(100, 200, 500, 1000)]
     public int SliceCount { get; set; }
 
     public override void Setup()
