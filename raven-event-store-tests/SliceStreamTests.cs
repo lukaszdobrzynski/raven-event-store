@@ -312,7 +312,7 @@ public class SliceStreamTests : TestBase
     }
 
     [Test]
-    public async Task SliceStream_BuildsPriorImprints_AfterFirstSlice()
+    public async Task StreamHeader_AddsSliceDescriptor_AfterFirstSlice()
     {
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
@@ -322,15 +322,17 @@ public class SliceStreamTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id,
+        await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id,
             UserActivatedEvent.Create);
-
-        StreamAssert.SliceImprintsCount(headStream, 1);
-        StreamAssert.SliceImprint(headStream, 0, sourceStream.Id, 1, sourceStream.Events[0].Timestamp);
+        
+        var sliceStreamHeader = await LoadSingleAsync<StreamHeader>(databaseName);
+        
+        StreamHeaderAssert.SliceDescriptorsCount(sliceStreamHeader, 1);
+        StreamHeaderAssert.SliceDescriptor(sliceStreamHeader, 0, sourceStream.Id, 1, sourceStream.Events[0].Timestamp);
     }
 
     [Test]
-    public async Task SliceStream_AccumulatesPriorImprints_AfterMultipleSlices()
+    public async Task StreamHeader_AccumulatesSliceDescriptors_AfterMultipleSlices()
     {
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
@@ -344,14 +346,14 @@ public class SliceStreamTests : TestBase
             UserActivatedEvent.Create,
             UserChangedEmailEvent.Create("john@event-sorcerer.io"));
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id,
+        await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id,
             UserRoleChangedEvent.Create("ADMIN"));
+        
+        var sliceStreamHeader = await LoadSingleAsync<StreamHeader>(databaseName);
 
-        StreamAssert.SliceImprintsCount(slice1, 0);
-        StreamAssert.SliceImprintsCount(slice2, 1);
-        StreamAssert.SliceImprintsCount(headStream, 2);
-        StreamAssert.SliceImprint(headStream, 0, slice1.Id, 1, slice1.Events[0].Timestamp);
-        StreamAssert.SliceImprint(headStream, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
+        StreamHeaderAssert.SliceDescriptorsCount(sliceStreamHeader, 2);
+        StreamHeaderAssert.SliceDescriptor(sliceStreamHeader, 0, slice1.Id, 1, slice1.Events[0].Timestamp);
+        StreamHeaderAssert.SliceDescriptor(sliceStreamHeader, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
     }
 
     [Test]

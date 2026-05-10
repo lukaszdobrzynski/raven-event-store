@@ -23,9 +23,9 @@ public partial class RavenEventStore
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
-        var pointer = await session.LoadAsync<HeadStreamPointer>(HeadStreamPointer.GetId(sourceStream.StreamKey), cancellationToken);
+        var header = await session.LoadAsync<StreamHeader>(StreamHeader.GetId(sourceStream.StreamKey), cancellationToken);
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
-
+        
         CheckForMissingAggregate(aggregate, sourceStream.Id, sourceStream.AggregateId);
 
         string seedId = null;
@@ -43,7 +43,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events, BuildPriorSliceImprints(sourceStream));
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
@@ -52,12 +52,12 @@ public partial class RavenEventStore
             session.Advanced.Evict(aggregate);
             await session.StoreAsync(newAggregate, changeVector, aggregate.Id, cancellationToken);
         }
-
+        
         await session.StoreAsync(newStreamSlice, cancellationToken);
         sourceStream.NextSliceId = newStreamSlice.Id;
-        pointer.HeadStreamId = newStreamSlice.Id;
+        header.HeadStreamId = newStreamSlice.Id;
+        header.AddSliceDescriptor(sourceStream.Id, sourceStream.Events[0].Version, sourceStream.Events[0].Timestamp);
         await session.StoreAsync(sourceStream, cancellationToken);
-
         await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events, cancellationToken);
         return newStreamSlice;
     }
@@ -76,7 +76,7 @@ public partial class RavenEventStore
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
-        var pointer = session.Load<HeadStreamPointer>(HeadStreamPointer.GetId(sourceStream.StreamKey));
+        var header = session.Load<StreamHeader>(StreamHeader.GetId(sourceStream.StreamKey));
 
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
 
@@ -97,7 +97,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events, BuildPriorSliceImprints(sourceStream));
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
@@ -109,14 +109,14 @@ public partial class RavenEventStore
 
         session.Store(newStreamSlice);
         sourceStream.NextSliceId = newStreamSlice.Id;
-        pointer.HeadStreamId = newStreamSlice.Id;
+        header.HeadStreamId = newStreamSlice.Id;
+        header.AddSliceDescriptor(sourceStream.Id, sourceStream.Events[0].Version, sourceStream.Events[0].Timestamp);
         session.Store(sourceStream);
-
         AppendToGlobalLog(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
         return newStreamSlice;
     }
 
-    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events, List<SliceImprint> priorSlices) where TStream : DocumentStream, new()
+    private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events) where TStream : DocumentStream, new()
     {
         return new TStream
         {
@@ -127,18 +127,6 @@ public partial class RavenEventStore
             AggregateId = aggregateId,
             SeedId = seedId,
             PreviousSliceId = previousStreamId,
-            PriorSlices = priorSlices
         };
-    }
-
-    private static List<SliceImprint> BuildPriorSliceImprints(DocumentStream sourceStream)
-    {
-        var imprint = new SliceImprint
-        {
-            SliceId = sourceStream.Id,
-            FirstVersion = sourceStream.Events[0].Version,
-            FirstTimestamp = sourceStream.Events[0].Timestamp
-        };
-        return [..sourceStream.PriorSlices, imprint];
     }
 }

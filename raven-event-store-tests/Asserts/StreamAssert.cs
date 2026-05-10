@@ -88,16 +88,4 @@ public static class StreamAssert
     {
         Assert.That(stream.NextSliceId, Is.EqualTo(expected));
     }
-
-    public static void SliceImprintsCount<TStream>(TStream stream, int expected) where TStream : DocumentStream
-    {
-        Assert.That(stream.PriorSlices, Has.Count.EqualTo(expected));
-    }
-
-    public static void SliceImprint<TStream>(TStream stream, int imprintIndex, string expectedSliceId, int expectedFirstVersion, DateTime expectedFirstTimestamp) where TStream : DocumentStream
-    {
-        Assert.That(stream.PriorSlices[imprintIndex].SliceId, Is.EqualTo(expectedSliceId));
-        Assert.That(stream.PriorSlices[imprintIndex].FirstVersion, Is.EqualTo(expectedFirstVersion));
-        Assert.That(stream.PriorSlices[imprintIndex].FirstTimestamp, Is.EqualTo(expectedFirstTimestamp));
-    }
 }

@@ -17,27 +17,27 @@ public partial class RavenEventStore
         if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
             throw new UnregisteredAggregateTypeException(typeof(TAggregate));
 
-        var pointer = await session
-            .Include<HeadStreamPointer>(x => x.HeadStreamId)
-            .LoadAsync<HeadStreamPointer>(HeadStreamPointer.GetId(streamKey), cancellationToken);
+        var header = await session
+            .Include<StreamHeader>(x => x.HeadStreamId)
+            .LoadAsync<StreamHeader>(StreamHeader.GetId(streamKey), cancellationToken);
 
-        if (pointer is null)
+        if (header is null)
             return null;
 
-        var head = await session.LoadAsync<TStream>(pointer.HeadStreamId, cancellationToken);
+        var head = await session.LoadAsync<TStream>(header.HeadStreamId, cancellationToken);
 
         if (head is null)
             return null;
 
-        return await ReplayToTimestampAsync<TAggregate, TStream>(session, head, timestamp, cancellationToken);
+        return await ReplayToTimestampAsync<TAggregate, TStream>(session, head, header, timestamp, cancellationToken);
     }
 
     private static async Task<TAggregate> ReplayToTimestampAsync<TAggregate, TStream>(
-        IAsyncDocumentSession session, DocumentStream head, DateTime timestamp, CancellationToken cancellationToken)
+        IAsyncDocumentSession session, DocumentStream head, StreamHeader header, DateTime timestamp, CancellationToken cancellationToken)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
-        var targetSlice = await ResolveTargetSliceAsync<TStream>(session, head, timestamp, cancellationToken);
+        var targetSlice = await ResolveTargetSliceAsync<TStream>(session, head, header, timestamp, cancellationToken);
         if (targetSlice is null)
             return null;
 
@@ -57,18 +57,18 @@ public partial class RavenEventStore
     }
 
     private static async Task<DocumentStream> ResolveTargetSliceAsync<TStream>(
-        IAsyncDocumentSession session, DocumentStream head, DateTime timestamp, CancellationToken cancellationToken)
+        IAsyncDocumentSession session, DocumentStream head, StreamHeader header, DateTime timestamp, CancellationToken cancellationToken)
         where TStream : DocumentStream
     {
         if (head.Events[0].Timestamp <= timestamp)
             return head;
-        
-        var targetIndex = SliceImprint.SearchByTimestamp(head.PriorSlices, timestamp);
+
+        var targetIndex = StreamHeader.SearchByTimestamp(header.Slices, timestamp);
         if (targetIndex < 0)
             return null;
 
-        var targetSlice = await session.LoadAsync<TStream>(head.PriorSlices[targetIndex].SliceId, cancellationToken);
-        CheckForNonExistentStream(targetSlice, head.PriorSlices[targetIndex].SliceId);
+        var targetSlice = await session.LoadAsync<TStream>(header.Slices[targetIndex].SliceId, cancellationToken);
+        CheckForNonExistentStream(targetSlice, header.Slices[targetIndex].SliceId);
         return targetSlice;
     }
 
@@ -80,27 +80,27 @@ public partial class RavenEventStore
         if (_aggregatesByStream.TryGetValue(typeof(TStream), out var registeredType) == false || registeredType != typeof(TAggregate))
             throw new UnregisteredAggregateTypeException(typeof(TAggregate));
 
-        var pointer = session
-            .Include<HeadStreamPointer>(x => x.HeadStreamId)
-            .Load<HeadStreamPointer>(HeadStreamPointer.GetId(streamKey));
+        var header = session
+            .Include<StreamHeader>(x => x.HeadStreamId)
+            .Load<StreamHeader>(StreamHeader.GetId(streamKey));
 
-        if (pointer is null)
+        if (header is null)
             return null;
 
-        var head = session.Load<TStream>(pointer.HeadStreamId);
+        var head = session.Load<TStream>(header.HeadStreamId);
 
         if (head is null)
             return null;
 
-        return ReplayToTimestamp<TAggregate, TStream>(session, head, timestamp);
+        return ReplayToTimestamp<TAggregate, TStream>(session, head, header, timestamp);
     }
 
     private static TAggregate ReplayToTimestamp<TAggregate, TStream>(
-        IDocumentSession session, DocumentStream head, DateTime timestamp)
+        IDocumentSession session, DocumentStream head, StreamHeader header, DateTime timestamp)
         where TAggregate : Aggregate
         where TStream : DocumentStream
     {
-        var targetSlice = ResolveTargetSlice<TStream>(session, head, timestamp);
+        var targetSlice = ResolveTargetSlice<TStream>(session, head, header, timestamp);
         if (targetSlice is null)
             return null;
 
@@ -120,18 +120,18 @@ public partial class RavenEventStore
     }
 
     private static DocumentStream ResolveTargetSlice<TStream>(
-        IDocumentSession session, DocumentStream head, DateTime timestamp)
+        IDocumentSession session, DocumentStream head, StreamHeader header, DateTime timestamp)
         where TStream : DocumentStream
     {
         if (head.Events[0].Timestamp <= timestamp)
             return head;
 
-        var targetIndex = SliceImprint.SearchByTimestamp(head.PriorSlices, timestamp);
+        var targetIndex = StreamHeader.SearchByTimestamp(header.Slices, timestamp);
         if (targetIndex < 0)
             return null;
 
-        var targetSlice = session.Load<TStream>(head.PriorSlices[targetIndex].SliceId);
-        CheckForNonExistentStream(targetSlice, head.PriorSlices[targetIndex].SliceId);
+        var targetSlice = session.Load<TStream>(header.Slices[targetIndex].SliceId);
+        CheckForNonExistentStream(targetSlice, header.Slices[targetIndex].SliceId);
         return targetSlice;
     }
 }
