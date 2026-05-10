@@ -7,7 +7,7 @@ using RavenEventStoreTestModels.Streams;
 namespace Raven.EventStore.Bench.Benchmarks;
 
 [MemoryDiagnoser]
-public class TimeTraversal : RavenEventStoreBenchmarkBase
+public class TimeTraversal : BenchmarkBase
 {
     private UserStream _stream;
     private DateTime _targetTimestamp;

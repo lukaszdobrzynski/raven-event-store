@@ -9,5 +9,6 @@ public class Program
     {
         BenchmarkRunner.Run<VersionTraversal>();
         BenchmarkRunner.Run<TimeTraversal>();
+        BenchmarkRunner.Run<Append>();
     }
 }

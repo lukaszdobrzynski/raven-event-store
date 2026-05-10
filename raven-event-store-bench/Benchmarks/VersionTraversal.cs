@@ -6,7 +6,7 @@ using RavenEventStoreTestModels.Streams;
 namespace Raven.EventStore.Bench.Benchmarks;
 
 [MemoryDiagnoser]
-public class VersionTraversal : RavenEventStoreBenchmarkBase
+public class VersionTraversal : BenchmarkBase
 {
     private UserStream _stream;
     private int _targetVersion;

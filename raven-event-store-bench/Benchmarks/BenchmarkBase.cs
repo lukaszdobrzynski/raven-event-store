@@ -6,7 +6,7 @@ using RavenEventStoreTestModels.Aggregates;
 
 namespace Raven.EventStore.Bench.Benchmarks;
 
-public abstract class RavenEventStoreBenchmarkBase
+public abstract class BenchmarkBase
 {
     private IDocumentStore _documentStore;
     protected IRavenEventStore RavenEventStore { get; private set; }
