@@ -27,7 +27,14 @@ public partial class RavenEventStore
             stream.AggregateId = aggregate.Id;
         }
 
-        var header = StreamHeader.Create(stream.StreamKey, stream.Id);
+        var header = StreamHeader.Create(
+            stream.StreamKey,
+            stream.Id,
+            stream.AggregateId,
+            headPosition: stream.Position,
+            headFirstVersion: stream.Events[0].Version,
+            headFirstTimestamp: stream.Events[0].Timestamp);
+        
         await session.StoreAsync(header, cancellationToken);
 
         await AppendToGlobalLogAsync(session, stream.Id, stream.StreamKey, events, cancellationToken);
@@ -53,7 +60,13 @@ public partial class RavenEventStore
             stream.AggregateId = aggregate.Id;
         }
 
-        var header = StreamHeader.Create(stream.StreamKey, stream.Id);
+        var header = StreamHeader.Create(
+            stream.StreamKey,
+            stream.Id,
+            stream.AggregateId,
+            headPosition: stream.Position,
+            headFirstVersion: stream.Events[0].Version,
+            headFirstTimestamp: stream.Events[0].Timestamp);
         session.Store(header);
 
         AppendToGlobalLog(session, stream.Id, stream.StreamKey, events);

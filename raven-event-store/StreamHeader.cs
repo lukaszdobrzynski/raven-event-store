@@ -7,14 +7,28 @@ public class StreamHeader
 {
     public string Id { get; internal set; }
     public string HeadStreamId { get; internal set; }
+    public string AggregateId { get; internal set; }
+    public int HeadPosition { get; internal set; }
+    public int HeadFirstVersion { get; internal set; }
+    public DateTime HeadFirstTimestamp { get; internal set; }
     public Guid StreamKey { get; internal set; }
     public List<SliceDescriptor> Slices { get; internal set; } = [];
 
-    internal static StreamHeader Create(Guid streamKey, string headStreamId) => new()
+    internal static StreamHeader Create(
+        Guid streamKey,
+        string headStreamId,
+        string aggregateId,
+        int headPosition,
+        int headFirstVersion,
+        DateTime headFirstTimestamp) => new()
     {
         Id = GetId(streamKey),
+        StreamKey = streamKey,
         HeadStreamId = headStreamId,
-        StreamKey = streamKey
+        AggregateId = aggregateId,
+        HeadPosition = headPosition,
+        HeadFirstVersion = headFirstVersion,
+        HeadFirstTimestamp = headFirstTimestamp,
     };
     
     public void AddSliceDescriptor(string sourceStreamId, int sourceStreamFirstVersion, DateTime sourceStreamFirstTimestamp)

@@ -227,6 +227,46 @@ public class CreateStreamTests : TestBase
     }
 
     [Test]
+    public async Task StreamHeader_HasHeadMetadata_AfterCreate()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+
+        var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
+        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
+
+        var header = await LoadSingleAsync<StreamHeader>(databaseName);
+
+        StreamHeaderAssert.HeadStreamId(header, stream.Id);
+        StreamHeaderAssert.AggregateId(header, stream.AggregateId);
+        StreamHeaderAssert.HeadPosition(header, 1);
+        StreamHeaderAssert.HeadFirstVersion(header, 1);
+        StreamHeaderAssert.HeadFirstTimestamp(header, stream.Events[0].Timestamp);
+    }
+
+    [Test]
+    public async Task StreamHeader_HasNullAggregateId_WhenNoAggregateRegistered()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .Build();
+
+        var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create);
+
+        var header = await LoadSingleAsync<StreamHeader>(databaseName);
+
+        StreamHeaderAssert.HeadStreamId(header, stream.Id);
+        StreamHeaderAssert.AggregateId(header, null);
+        StreamHeaderAssert.HeadPosition(header, 2);
+        StreamHeaderAssert.HeadFirstVersion(header, 1);
+        StreamHeaderAssert.HeadFirstTimestamp(header, stream.Events[0].Timestamp);
+    }
+
+    [Test]
     public async Task Throws_WhenEvents_ContainNull()
     {
         var event1 = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");

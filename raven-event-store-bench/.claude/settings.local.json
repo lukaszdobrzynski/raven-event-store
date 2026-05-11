@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(xargs grep -l \"SliceChainDepth\")",
-      "Bash(xargs grep -l \"CheckForAttemptToCreateSliceStreamFromNonHead\")",
-      "Bash(xargs grep -l \"HandleGetAggregate\")"
-    ]
-  }
-}

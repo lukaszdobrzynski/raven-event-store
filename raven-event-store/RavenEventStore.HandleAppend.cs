@@ -46,6 +46,9 @@ public partial class RavenEventStore
             session.Store(aggregate);
         }
 
+        var header = session.Load<StreamHeader>(StreamHeader.GetId(stream.StreamKey));
+        header.HeadPosition = stream.Position;
+
         AppendToGlobalLog(session, streamId, stream.StreamKey, events);
     }
 
@@ -84,6 +87,9 @@ public partial class RavenEventStore
             aggregate.Id = stream.AggregateId;
             await session.StoreAsync(aggregate, cancellationToken);
         }
+
+        var header = await session.LoadAsync<StreamHeader>(StreamHeader.GetId(stream.StreamKey), cancellationToken);
+        header.HeadPosition = stream.Position;
 
         await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events, cancellationToken);
     }

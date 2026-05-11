@@ -26,14 +26,6 @@ public partial class RavenEventStore
             throw new NonExistentStreamException(streamId);
     }
 
-    private static void CheckForAttemptToCreateSliceStreamFromNonHead<TStream>(TStream stream)
-        where TStream : DocumentStream
-    {
-        if (stream.IsHeadSlice == false)
-            throw new CreateSliceStreamFromNotHeadException($"Cannot create a split stream from a non-head. " +
-                                                  $"The stream with the ID {stream.Id} is a parent to an existing slice with the ID {stream.NextSliceId}.");
-    }
-
     private static void CheckForAttemptToAppendToNonHead<TStream>(TStream stream) where TStream : DocumentStream
     {
         if (stream.IsHeadSlice == false)

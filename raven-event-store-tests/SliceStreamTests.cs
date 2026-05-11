@@ -354,4 +354,52 @@ public class SliceStreamTests : TestBase
         StreamHeaderAssert.SliceDescriptor(sliceStreamHeader, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
     }
 
+    [Test]
+    public async Task StreamHeader_HeadMetadata_RollsForward_AfterSlice()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create);
+
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey,
+            UserActivatedEvent.Create,
+            UserChangedEmailEvent.Create("john@event-sorcerer.io"));
+
+        var header = await LoadSingleAsync<StreamHeader>(databaseName);
+
+        StreamHeaderAssert.HeadStreamId(header, headStream.Id);
+        StreamHeaderAssert.AggregateId(header, headStream.AggregateId);
+        StreamHeaderAssert.HeadPosition(header, headStream.Position);
+        StreamHeaderAssert.HeadFirstVersion(header, headStream.Events[0].Version);
+        StreamHeaderAssert.HeadFirstTimestamp(header, headStream.Events[0].Timestamp);
+    }
+
+    [Test]
+    public async Task RetiringSlice_HasNextSliceId_And_ArchiveId_Set_AfterSlice()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .WithAggregate(typeof(User))
+            .Build();
+
+        var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId,
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
+            UserVerifiedEvent.Create);
+
+        var nextStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, nextStreamId,
+            UserActivatedEvent.Create);
+
+        var retiringSliceFromDb = await LoadAsync<UserStream>(databaseName, sourceStreamId);
+
+        StreamAssert.NextSliceId(retiringSliceFromDb, headStream.Id);
+        StreamAssert.ArchiveNotNull(retiringSliceFromDb);
+    }
+
 }

@@ -174,6 +174,26 @@ public class AppendTests : TestBase
     }
 
     [Test]
+    public async Task StreamHeader_HeadPosition_AdvancesAfterAppend()
+    {
+        var databaseName = await CreateDatabase();
+        var eventStore = InitEventStoreBuilder(databaseName)
+            .Build();
+
+        var stream = eventStore.CreateStreamAndStore<UserStream>(
+            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
+
+        await eventStore.AppendAndStoreAsync<UserStream>(stream.Id, UserVerifiedEvent.Create, UserActivatedEvent.Create);
+
+        var header = await LoadSingleAsync<StreamHeader>(databaseName);
+
+        StreamHeaderAssert.HeadStreamId(header, stream.Id);
+        StreamHeaderAssert.HeadPosition(header, 3);
+        StreamHeaderAssert.HeadFirstVersion(header, 1);
+        StreamHeaderAssert.HeadFirstTimestamp(header, stream.Events[0].Timestamp);
+    }
+
+    [Test]
     public async Task AppendsSingleEventToStream()
     {
         var databaseName = await CreateDatabase();
