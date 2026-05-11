@@ -13,19 +13,17 @@ namespace Raven.EventStore.Tests;
 public class SliceStreamTests : TestBase
 {
     [Test]
-    public async Task Throws_WhenSourceStream_DoesNotExist()
+    public async Task Throws_WhenStreamChain_DoesNotExist()
     {
-        const string sourceStreamId = "DOES-NOT-EXIST";
-        
         var databaseName = await CreateDatabase();
 
-        await AssertNoDocumentInDb<UserStream>(databaseName, sourceStreamId);
-        
         var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
-        
-        Assert.ThrowsAsync<NonExistentStreamException>(async () => 
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, "NEW-STREAM-ID", UserActivatedEvent.Create));
+
+        var nonExistentStreamKey = Guid.NewGuid();
+
+        Assert.ThrowsAsync<NonExistentStreamException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(nonExistentStreamKey, "NEW-STREAM-ID", UserActivatedEvent.Create));
     }
 
     [Test]
@@ -41,81 +39,81 @@ public class SliceStreamTests : TestBase
         var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
         var nextStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
         
-        await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
-        
-        Assert.ThrowsAsync<ArgumentException>(async () => 
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, nextStreamId, newStreamEvents));
-        
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
+
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, nextStreamId, newStreamEvents));
+
         await AssertNoDocumentInDb<UserStream>(databaseName, nextStreamId);
-        
-        var sourceStream = await LoadAsync<UserStream>(databaseName, sourceStreamId);
-        
-        StreamAssert.EventsCount(sourceStream, 1);
-        StreamAssert.Position(sourceStream, 1);
-        StreamAssert.ArchiveNull(sourceStream);
-        StreamAssert.SeedNull(sourceStream);
-        StreamAssert.AggregateIdNull(sourceStream);
-        StreamAssert.IsHead(sourceStream);
+
+        var sourceStreamFromDb = await LoadAsync<UserStream>(databaseName, sourceStreamId);
+
+        StreamAssert.EventsCount(sourceStreamFromDb, 1);
+        StreamAssert.Position(sourceStreamFromDb, 1);
+        StreamAssert.ArchiveNull(sourceStreamFromDb);
+        StreamAssert.SeedNull(sourceStreamFromDb);
+        StreamAssert.AggregateIdNull(sourceStreamFromDb);
+        StreamAssert.IsHead(sourceStreamFromDb);
     }
-    
+
     [Test]
     public async Task Throws_WhenEventsAreEmpty_InNextStream()
     {
         List<Event> newStreamEvents = [];
-        
+
         var databaseName = await CreateDatabase();
-        
+
         var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
         var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
         var nextStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
-        
-        await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
-        
-        Assert.ThrowsAsync<ArgumentException>(async () => 
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, nextStreamId, newStreamEvents));
-        
+
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
+
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, nextStreamId, newStreamEvents));
+
         await AssertNoDocumentInDb<UserStream>(databaseName, nextStreamId);
-        
-        var sourceStream = await LoadAsync<UserStream>(databaseName, sourceStreamId);
-        
-        StreamAssert.EventsCount(sourceStream, 1);
-        StreamAssert.Position(sourceStream, 1);
-        StreamAssert.ArchiveNull(sourceStream);
-        StreamAssert.SeedNull(sourceStream);
-        StreamAssert.AggregateIdNull(sourceStream);
-        StreamAssert.IsHead(sourceStream);
+
+        var sourceStreamFromDb = await LoadAsync<UserStream>(databaseName, sourceStreamId);
+
+        StreamAssert.EventsCount(sourceStreamFromDb, 1);
+        StreamAssert.Position(sourceStreamFromDb, 1);
+        StreamAssert.ArchiveNull(sourceStreamFromDb);
+        StreamAssert.SeedNull(sourceStreamFromDb);
+        StreamAssert.AggregateIdNull(sourceStreamFromDb);
+        StreamAssert.IsHead(sourceStreamFromDb);
     }
-    
+
     [Test]
     public async Task Throws_WhenEventsContainNull_InNextStream()
     {
         List<Event> newStreamEvents = [UserVerifiedEvent.Create, null];
-        
+
         var databaseName = await CreateDatabase();
-        
+
         var eventStore = InitEventStoreBuilder(databaseName)
             .Build();
 
         var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
         var nextStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
-        
-        await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
-        
-        Assert.ThrowsAsync<ArgumentException>(async () => 
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, nextStreamId, newStreamEvents));
-        
+
+        var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, UserActivatedEvent.Create);
+
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, nextStreamId, newStreamEvents));
+
         await AssertNoDocumentInDb<UserStream>(databaseName, nextStreamId);
-        
-        var sourceStream = await LoadAsync<UserStream>(databaseName, sourceStreamId);
-        
-        StreamAssert.EventsCount(sourceStream, 1);
-        StreamAssert.Position(sourceStream, 1);
-        StreamAssert.ArchiveNull(sourceStream);
-        StreamAssert.SeedNull(sourceStream);
-        StreamAssert.AggregateIdNull(sourceStream);
-        StreamAssert.IsHead(sourceStream);
+
+        var sourceStreamFromDb = await LoadAsync<UserStream>(databaseName, sourceStreamId);
+
+        StreamAssert.EventsCount(sourceStreamFromDb, 1);
+        StreamAssert.Position(sourceStreamFromDb, 1);
+        StreamAssert.ArchiveNull(sourceStreamFromDb);
+        StreamAssert.SeedNull(sourceStreamFromDb);
+        StreamAssert.AggregateIdNull(sourceStreamFromDb);
+        StreamAssert.IsHead(sourceStreamFromDb);
     }
 
     [Test]
@@ -132,7 +130,7 @@ public class SliceStreamTests : TestBase
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, registered);
         
         var verified = UserVerifiedEvent.Create;
-        var nextStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, nextStreamId, verified);
+        var nextStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, nextStreamId, verified);
         
         StreamAssert.Key(nextStream, sourceStream.StreamKey);
         StreamAssert.Position(sourceStream, 1);
@@ -170,7 +168,7 @@ public class SliceStreamTests : TestBase
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registered);
 
         var verified = UserVerifiedEvent.Create;
-        var nextStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, verified);
+        var nextStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, verified);
 
         StreamAssert.IdNotNull(nextStream);
         Assert.That(nextStream.Id, Is.Not.EqualTo(sourceStream.Id));
@@ -212,13 +210,13 @@ public class SliceStreamTests : TestBase
             UserActivatedEvent.Create);
         
         var sliceStream1Id = CreateSliceStreamNextId(sourceStreamId, "2025-05");
-        var sliceStream1 = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, sliceStream1Id, 
+        var sliceStream1 = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, sliceStream1Id,
             UserChangedEmailEvent.Create("alice@event-sorcerer.io"),
-                UserRoleChangedEvent.Create("ADMIN"));
-        
+            UserRoleChangedEvent.Create("ADMIN"));
+
         var sliceStream2Id = CreateSliceStreamNextId(sliceStream1Id, "2025-06");
-        var sliceStream2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(sliceStream1Id, sliceStream2Id,
-                UserDeactivatedEvent.Create);
+        var sliceStream2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(sliceStream1.StreamKey, sliceStream2Id,
+            UserDeactivatedEvent.Create);
         
         StreamAssert.Key(sliceStream1, sourceStream.StreamKey);
         StreamAssert.Key(sliceStream2, sourceStream.StreamKey);
@@ -308,7 +306,7 @@ public class SliceStreamTests : TestBase
         await Delete(databaseName, sourceStream.AggregateId);
 
         Assert.ThrowsAsync<NonExistentAggregateException>(async () =>
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, UserVerifiedEvent.Create));
+            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, UserVerifiedEvent.Create));
     }
 
     [Test]
@@ -322,7 +320,7 @@ public class SliceStreamTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id,
+        await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey,
             UserActivatedEvent.Create);
         
         var sliceStreamHeader = await LoadSingleAsync<StreamHeader>(databaseName);
@@ -342,11 +340,11 @@ public class SliceStreamTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey,
             UserActivatedEvent.Create,
             UserChangedEmailEvent.Create("john@event-sorcerer.io"));
 
-        await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id,
+        await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.StreamKey,
             UserRoleChangedEvent.Create("ADMIN"));
         
         var sliceStreamHeader = await LoadSingleAsync<StreamHeader>(databaseName);
@@ -356,58 +354,4 @@ public class SliceStreamTests : TestBase
         StreamHeaderAssert.SliceDescriptor(sliceStreamHeader, 1, slice2.Id, 3, slice2.Events[0].Timestamp);
     }
 
-    [Test]
-    public async Task Throws_WhenSourceStream_IsNotHead()
-    {
-        var databaseName = await CreateDatabase();
-        var eventStore = InitEventStoreBuilder(databaseName)
-            .Build();
-        
-        var sourceStreamId = await CreateSemanticId<UserStream>(databaseName, "2025-04");
-        await eventStore.CreateStreamAndStoreAsync<UserStream>(sourceStreamId, 
-            UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
-            UserVerifiedEvent.Create,
-            UserActivatedEvent.Create);
-        
-        var sliceStream1Id = CreateSliceStreamNextId(sourceStreamId, "2025-05");
-        await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, sliceStream1Id, 
-            UserChangedEmailEvent.Create("alice@event-sorcerer.io"),
-            UserRoleChangedEvent.Create("ADMIN"));
-        
-        var sourceStreamFromDbBefore = await LoadAsync<UserStream>(databaseName, sourceStreamId);
-        var sliceStream1FromDbBefore = await LoadAsync<UserStream>(databaseName, sliceStream1Id);
-        
-        StreamAssert.IsNotHead(sourceStreamFromDbBefore);
-        StreamAssert.IsHead(sliceStream1FromDbBefore);
-        
-        StreamAssert.PreviousSliceId(sourceStreamFromDbBefore, null);
-        StreamAssert.PreviousSliceId(sliceStream1FromDbBefore, sourceStreamId);
-        StreamAssert.NextSliceId(sourceStreamFromDbBefore, sliceStream1FromDbBefore.Id);
-        StreamAssert.NextSliceId(sliceStream1FromDbBefore, null);
-        
-        StreamAssert.Position(sourceStreamFromDbBefore, 3);
-        StreamAssert.Position(sliceStream1FromDbBefore, 5);
-        
-        var sliceStream2Id = CreateSliceStreamNextId(sliceStream1Id, "2025-06");
-
-        Assert.ThrowsAsync<CreateSliceStreamFromNotHeadException>(async () =>
-            await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStreamId, sliceStream2Id,
-                UserDeactivatedEvent.Create));
-        
-        await AssertNoDocumentInDb<UserStream>(databaseName, sliceStream2Id);
-
-        var sourceStreamFromDbAfter = await LoadAsync<UserStream>(databaseName, sourceStreamId);
-        var sliceStream1FromDbAfter = await LoadAsync<UserStream>(databaseName, sliceStream1Id);
-        
-        StreamAssert.IsNotHead(sourceStreamFromDbAfter);
-        StreamAssert.IsHead(sliceStream1FromDbAfter);
-        
-        StreamAssert.PreviousSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.PreviousSliceId);
-        StreamAssert.PreviousSliceId(sliceStream1FromDbAfter, sliceStream1FromDbBefore.PreviousSliceId);
-        StreamAssert.NextSliceId(sourceStreamFromDbAfter, sourceStreamFromDbBefore.NextSliceId);
-        StreamAssert.NextSliceId(sliceStream1FromDbAfter, sliceStream1FromDbBefore.NextSliceId);
-        
-        StreamAssert.Position(sourceStreamFromDbAfter, sourceStreamFromDbAfter.Position);
-        StreamAssert.Position(sliceStream1FromDbAfter, sliceStream1FromDbAfter.Position);
-    }
 }

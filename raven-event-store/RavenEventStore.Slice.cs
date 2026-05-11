@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,50 +9,50 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId,
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, Guid streamKey, string newStreamId,
         params Event[] events) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList(), CancellationToken.None);
+        return HandleSliceAsync<TStream>(session, streamKey, newStreamId, events?.ToList(), CancellationToken.None);
     }
-    
-    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, params Event[] events)
+
+    public TStream SliceStream<TStream>(IDocumentSession session, Guid streamKey, string newStreamId, params Event[] events)
         where TStream : DocumentStream, new()
     {
-        return HandleSlice<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
+        return HandleSlice<TStream>(session, streamKey, newStreamId, events?.ToList());
     }
-    
-    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
+
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, Guid streamKey, string newStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId, events?.ToList(), cancellationToken);
+        return HandleSliceAsync<TStream>(session, streamKey, newStreamId, events?.ToList(), cancellationToken);
     }
-    
-    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, IEnumerable<Event> events)
+
+    public TStream SliceStream<TStream>(IDocumentSession session, Guid streamKey, string newStreamId, IEnumerable<Event> events)
         where TStream : DocumentStream, new()
     {
-        return HandleSlice<TStream>(session, sourceStreamId, newStreamId, events?.ToList());
+        return HandleSlice<TStream>(session, streamKey, newStreamId, events?.ToList());
     }
-    
-    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId,
+
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, Guid streamKey,
         params Event[] events) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList(), CancellationToken.None);
+        return HandleSliceAsync<TStream>(session, streamKey, newStreamId: null, events?.ToList(), CancellationToken.None);
     }
 
-    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, params Event[] events)
+    public TStream SliceStream<TStream>(IDocumentSession session, Guid streamKey, params Event[] events)
         where TStream : DocumentStream, new()
     {
-        return HandleSlice<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList());
+        return HandleSlice<TStream>(session, streamKey, newStreamId: null, events?.ToList());
     }
 
-    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId,
+    public Task<TStream> SliceStreamAsync<TStream>(IAsyncDocumentSession session, Guid streamKey,
         IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
-        return HandleSliceAsync<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList(), cancellationToken);
+        return HandleSliceAsync<TStream>(session, streamKey, newStreamId: null, events?.ToList(), cancellationToken);
     }
 
-    public TStream SliceStream<TStream>(IDocumentSession session, string sourceStreamId, IEnumerable<Event> events)
+    public TStream SliceStream<TStream>(IDocumentSession session, Guid streamKey, IEnumerable<Event> events)
         where TStream : DocumentStream, new()
     {
-        return HandleSlice<TStream>(session, sourceStreamId, newStreamId: null, events?.ToList());
+        return HandleSlice<TStream>(session, streamKey, newStreamId: null, events?.ToList());
     }
 }

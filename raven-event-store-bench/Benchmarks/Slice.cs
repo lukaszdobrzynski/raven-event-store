@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
@@ -9,7 +10,7 @@ namespace Raven.EventStore.Bench.Benchmarks;
 [MemoryDiagnoser]
 public class Slice : BenchmarkBase
 {
-    private string _sourceStreamId;
+    private Guid _sourceStreamKey;
 
     [Params(1, 10, 100)]
     public int EventsInNewSlice { get; set; }
@@ -24,16 +25,16 @@ public class Slice : BenchmarkBase
     public void IterationSetup()
     {
         var stream = StreamFactory.CreateUserStream(EventsInSourceStream, SliceChainDepth);
-        _sourceStreamId = stream.Id;
+        _sourceStreamKey = stream.StreamKey;
     }
 
     [Benchmark]
     public UserStream SliceAndStore() =>
-        RavenEventStore.SliceStreamAndStore<UserStream>(_sourceStreamId, GenerateBatch());
+        RavenEventStore.SliceStreamAndStore<UserStream>(_sourceStreamKey, GenerateBatch());
 
     [Benchmark]
     public Task<UserStream> SliceAndStoreAsync() =>
-        RavenEventStore.SliceStreamAndStoreAsync<UserStream>(_sourceStreamId, GenerateBatch());
+        RavenEventStore.SliceStreamAndStoreAsync<UserStream>(_sourceStreamKey, GenerateBatch());
 
     private Event[] GenerateBatch() => Enumerable.Range(0, EventsInNewSlice)
         .Select(_ => UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"))

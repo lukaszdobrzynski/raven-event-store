@@ -77,7 +77,7 @@ public class GetAggregateAtVersionTests : TestBase
             .Build();
 
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
-        var sliceStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, UserVerifiedEvent.Create);
+        var sliceStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, UserVerifiedEvent.Create);
         
         StreamAssert.Position(sourceStream, 1);
         StreamAssert.Position(sliceStream, 2);
@@ -170,7 +170,7 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id,
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey,
             UserActivatedEvent.Create,
             UserChangedEmailEvent.Create("john@event-sorcerer.io"));
 
@@ -196,11 +196,11 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey,
             UserActivatedEvent.Create,
             UserChangedEmailEvent.Create("john@event-sorcerer.io"));
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id,
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.StreamKey,
             UserRoleChangedEvent.Create("ADMIN"));
 
         StreamAssert.Position(headStream, 5);
@@ -225,7 +225,7 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey,
             UserActivatedEvent.Create);
 
         StreamAssert.Position(headStream, 3);
@@ -250,7 +250,7 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey,
             UserActivatedEvent.Create);
 
         await Delete(databaseName, headStream.SeedId);
@@ -273,7 +273,7 @@ public class GetAggregateAtVersionTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"),
             UserVerifiedEvent.Create);
 
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id,
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey,
             UserActivatedEvent.Create);
 
         await Delete(databaseName, headStream.PreviousSliceId);

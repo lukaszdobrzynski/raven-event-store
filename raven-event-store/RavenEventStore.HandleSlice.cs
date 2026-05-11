@@ -9,23 +9,27 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private async Task<TStream> HandleSliceAsync<TStream>(IAsyncDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
+    private async Task<TStream> HandleSliceAsync<TStream>(IAsyncDocumentSession session, Guid streamKey, string newStreamId, List<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream, new()
     {
         CheckForNullOrEmptyEvents(events);
 
+        var header = await session.LoadAsync<StreamHeader>(StreamHeader.GetId(streamKey), cancellationToken);
+
+        if (header is null)
+            throw new NonExistentStreamException(streamKey);
+
         var sourceStream = await session
             .Include<TStream>(x => x.AggregateId)
-            .LoadAsync(sourceStreamId, cancellationToken);
+            .LoadAsync<TStream>(header.HeadStreamId, cancellationToken);
 
         if (sourceStream is null)
-            throw new NonExistentStreamException(sourceStreamId);
+            throw new NonExistentStreamException(header.HeadStreamId);
 
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
 
-        var header = await session.LoadAsync<StreamHeader>(StreamHeader.GetId(sourceStream.StreamKey), cancellationToken);
         var aggregate = await session.LoadAsync<Aggregate>(sourceStream.AggregateId, cancellationToken);
-        
+
         CheckForMissingAggregate(aggregate, sourceStream.Id, sourceStream.AggregateId);
 
         string seedId = null;
@@ -43,7 +47,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStream.Id, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)
@@ -52,7 +56,7 @@ public partial class RavenEventStore
             session.Advanced.Evict(aggregate);
             await session.StoreAsync(newAggregate, changeVector, aggregate.Id, cancellationToken);
         }
-        
+
         await session.StoreAsync(newStreamSlice, cancellationToken);
         sourceStream.NextSliceId = newStreamSlice.Id;
         header.HeadStreamId = newStreamSlice.Id;
@@ -62,21 +66,24 @@ public partial class RavenEventStore
         return newStreamSlice;
     }
 
-    private TStream HandleSlice<TStream>(IDocumentSession session, string sourceStreamId, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
+    private TStream HandleSlice<TStream>(IDocumentSession session, Guid streamKey, string newStreamId, List<Event> events) where TStream : DocumentStream, new()
     {
         CheckForNullOrEmptyEvents(events);
 
+        var header = session.Load<StreamHeader>(StreamHeader.GetId(streamKey));
+
+        if (header is null)
+            throw new NonExistentStreamException(streamKey);
+
         var sourceStream = session
             .Include<TStream>(x => x.AggregateId)
-            .Load(sourceStreamId);
+            .Load<TStream>(header.HeadStreamId);
 
         if (sourceStream is null)
-            throw new NonExistentStreamException(sourceStreamId);
+            throw new NonExistentStreamException(header.HeadStreamId);
 
         CheckForAttemptToCreateSliceStreamFromNonHead(sourceStream);
         AssignVersionToEvents(events, sourceStream.Position + 1);
-
-        var header = session.Load<StreamHeader>(StreamHeader.GetId(sourceStream.StreamKey));
 
         var aggregate = session.Load<Aggregate>(sourceStream.AggregateId);
 
@@ -97,7 +104,7 @@ public partial class RavenEventStore
             seedForRebuild = AggregateCloner.Clone(aggregate);
         }
 
-        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStreamId, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
+        var newStreamSlice = CreateNewStreamSlice<TStream>(sourceStream.Id, newStreamId, sourceStream.StreamKey, sourceStream.AggregateId, seedId, events);
         var newAggregate = BuildAggregate(newStreamSlice, seedForRebuild);
 
         if (aggregate is not null)

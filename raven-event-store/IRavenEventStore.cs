@@ -26,15 +26,15 @@ public interface IRavenEventStore
     void AppendAndStore<TStream>(string streamId, params Event[] events)
         where TStream : DocumentStream;
 
-    Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, params Event[] events)
+    Task<TStream> SliceStreamAndStoreAsync<TStream>(Guid streamKey, params Event[] events)
         where TStream : DocumentStream, new();
-    Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, string newStreamId, params Event[] events)
+    Task<TStream> SliceStreamAndStoreAsync<TStream>(Guid streamKey, string newStreamId, params Event[] events)
         where TStream : DocumentStream, new();
-    Task<TStream> SliceStreamAndStoreAsync<TStream>(string sourceStreamId, string newStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default)
+    Task<TStream> SliceStreamAndStoreAsync<TStream>(Guid streamKey, string newStreamId, IEnumerable<Event> events, CancellationToken cancellationToken = default)
         where TStream : DocumentStream, new();
-    TStream SliceStreamAndStore<TStream>(string sourceStreamId, params Event[] events)
+    TStream SliceStreamAndStore<TStream>(Guid streamKey, params Event[] events)
         where TStream : DocumentStream, new();
-    TStream SliceStreamAndStore<TStream>(string sourceStreamId, string newStreamId, params Event[] events)
+    TStream SliceStreamAndStore<TStream>(Guid streamKey, string newStreamId, params Event[] events)
         where TStream : DocumentStream, new();
 
     Task<TStream> GetStreamAsync<TStream>(string streamId, CancellationToken cancellationToken = default)

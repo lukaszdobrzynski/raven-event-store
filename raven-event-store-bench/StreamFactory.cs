@@ -28,7 +28,7 @@ public class StreamFactory(IRavenEventStore eventStore)
 
         for (var i = 0; i < sliceCount; i++)
         {
-            stream = eventStore.SliceStreamAndStore<UserStream>(stream.Id, GenerateBatch());
+            stream = eventStore.SliceStreamAndStore<UserStream>(stream.StreamKey, GenerateBatch());
         }
 
         return stream;
@@ -44,7 +44,7 @@ public class StreamFactory(IRavenEventStore eventStore)
         var stream = eventStore.CreateStreamAndStore<UserStream>(GenerateBatch());
 
         for (var i = 0; i < sliceCount; i++)
-            stream = eventStore.SliceStreamAndStore<UserStream>(stream.Id, GenerateBatch());
+            stream = eventStore.SliceStreamAndStore<UserStream>(stream.StreamKey, GenerateBatch());
 
         return stream;
 

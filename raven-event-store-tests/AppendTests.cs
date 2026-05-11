@@ -73,7 +73,7 @@ public class AppendTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
         
         var sliceStreamId = CreateSliceStreamNextId(sourceStreamId, "2025-05");
-        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStreamId, sliceStreamId, UserVerifiedEvent.Create);
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.StreamKey, sliceStreamId, UserVerifiedEvent.Create);
         
         var sourceStreamFromDbBefore = await LoadAsync<UserStream>(databaseName, sourceStreamId);
         
@@ -138,7 +138,7 @@ public class AppendTests : TestBase
         
         var nextStreamId = CreateSliceStreamNextId(sourceStream.Id, "2025-05");
         
-        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.Id, nextStreamId, UserVerifiedEvent.Create);
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.StreamKey, nextStreamId, UserVerifiedEvent.Create);
         
         await AssertDocumentExistsInDb<SliceStreamSeed>(databaseName, sliceStream.SeedId);
         
@@ -159,7 +159,7 @@ public class AppendTests : TestBase
             UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER"));
 
         var nextStreamId = CreateSliceStreamNextId(sourceStream.Id, "2025-05");
-        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.Id, nextStreamId, UserVerifiedEvent.Create);
+        var sliceStream = eventStore.SliceStreamAndStore<UserStream>(sourceStream.StreamKey, nextStreamId, UserVerifiedEvent.Create);
 
         await AssertDocumentExistsInDb<SliceStreamSeed>(databaseName, sliceStream.SeedId);
 

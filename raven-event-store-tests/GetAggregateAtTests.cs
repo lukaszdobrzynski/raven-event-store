@@ -163,7 +163,7 @@ public class GetAggregateAtTests : TestBase
         changedEmailEvent.Timestamp = t4;
 
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, activatedEvent, changedEmailEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, activatedEvent, changedEmailEvent);
 
         var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
@@ -202,8 +202,8 @@ public class GetAggregateAtTests : TestBase
         roleChangedEvent.Timestamp = t5;
 
         var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
-        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent, changedEmailEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.Id, roleChangedEvent);
+        var slice2 = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey, activatedEvent, changedEmailEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice2.StreamKey, roleChangedEvent);
 
         var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
@@ -234,7 +234,7 @@ public class GetAggregateAtTests : TestBase
         activatedEvent.Timestamp = t3;
 
         var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey, activatedEvent);
 
         var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
@@ -265,7 +265,7 @@ public class GetAggregateAtTests : TestBase
         activatedEvent.Timestamp = t3;
 
         var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey, activatedEvent);
 
         await Delete(databaseName, headStream.SeedId);
 
@@ -296,7 +296,7 @@ public class GetAggregateAtTests : TestBase
         activatedEvent.Timestamp = t3;
 
         var slice1 = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent, verifiedEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.Id, activatedEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(slice1.StreamKey, activatedEvent);
 
         await Delete(databaseName, headStream.PreviousSliceId);
 
@@ -338,7 +338,7 @@ public class GetAggregateAtTests : TestBase
         verifiedEvent.Timestamp = t3;
 
         var sourceStream = await eventStore.CreateStreamAndStoreAsync<UserStream>(registeredEvent);
-        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.Id, verifiedEvent);
+        var headStream = await eventStore.SliceStreamAndStoreAsync<UserStream>(sourceStream.StreamKey, verifiedEvent);
 
         var aggregate = await eventStore.GetAggregateAtAsync<User, UserStream>(headStream.StreamKey, queryTimestamp);
 
