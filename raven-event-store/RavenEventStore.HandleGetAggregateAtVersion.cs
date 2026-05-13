@@ -49,7 +49,7 @@ public partial class RavenEventStore
 
         if (targetSlice.SeedId is not null)
         {
-            var seed = await session.LoadAsync<SliceStreamSeed>(targetSlice.SeedId, cancellationToken);
+            var seed = await session.LoadAsync<StreamSliceSeed>(targetSlice.SeedId, cancellationToken);
             CheckForMissingSeed(seed, targetSlice.Id, targetSlice.SeedId);
             return BuildAggregateAtVersion<TAggregate>(targetSlice, events, seed.State);
         }
@@ -112,7 +112,7 @@ public partial class RavenEventStore
 
         if (targetSlice.SeedId is not null)
         {
-            var seed = session.Load<SliceStreamSeed>(targetSlice.SeedId);
+            var seed = session.Load<StreamSliceSeed>(targetSlice.SeedId);
             CheckForMissingSeed(seed, targetSlice.Id, targetSlice.SeedId);
             return BuildAggregateAtVersion<TAggregate>(targetSlice, events, seed.State);
         }

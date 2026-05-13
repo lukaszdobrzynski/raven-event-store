@@ -26,11 +26,10 @@ public partial class RavenEventStore
             throw new NonExistentStreamException(streamId);
     }
 
-    private static void CheckForAttemptToAppendToNonHead<TStream>(TStream stream) where TStream : DocumentStream
+    private static void CheckForMissingHeader(StreamHeader header, Guid streamKey)
     {
-        if (stream.IsHeadSlice == false)
-            throw new AppendToNotHeadException($"Cannot append to a non-head. " +
-                                               $"The stream with the ID {stream.Id} is a parent to an existing slice with the ID {stream.NextSliceId}.");
+        if (header is null)
+            throw new NonExistentHeaderException(streamKey);
     }
 
     private static void CheckForMissingAggregate(Aggregate aggregate, string streamId, string aggregateId)
@@ -39,7 +38,7 @@ public partial class RavenEventStore
             throw new NonExistentAggregateException(streamId, aggregateId);
     }
 
-    private static void CheckForMissingSeed(SliceStreamSeed seed, string streamId, string seedId)
+    private static void CheckForMissingSeed(StreamSliceSeed seed, string streamId, string seedId)
     {
         if (seedId is not null && seed is null)
             throw new NonExistentSeedException(streamId, seedId);

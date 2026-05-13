@@ -17,8 +17,7 @@ public partial class RavenEventStore
             .Include<StreamHeader>(x => x.AggregateId)
             .LoadAsync<StreamHeader>(StreamHeader.GetId(streamKey), cancellationToken);
 
-        if (header is null)
-            throw new NonExistentStreamException(streamKey);
+        CheckForMissingHeader(header, streamKey);
 
         AssignVersionToEvents(events, header.HeadPosition + 1);
 
@@ -34,11 +33,11 @@ public partial class RavenEventStore
 
         if (aggregate is not null)
         {
-            var archiveDoc = new SliceStreamArchive { State = aggregate };
+            var archiveDoc = new StreamSliceArchive { State = aggregate };
             await session.StoreAsync(archiveDoc, cancellationToken);
             archiveId = archiveDoc.Id;
 
-            var seedDoc = new SliceStreamSeed { State = aggregate };
+            var seedDoc = new StreamSliceSeed { State = aggregate };
             await session.StoreAsync(seedDoc, cancellationToken);
             seedId = seedDoc.Id;
             seedForRebuild = AggregateCloner.Clone(aggregate);
@@ -63,12 +62,7 @@ public partial class RavenEventStore
             session.Advanced.Patch<TStream, string>(header.HeadStreamId, x => x.ArchiveId, archiveId);
         }
             
-        header.AddSliceDescriptor(header.HeadStreamId, header.HeadFirstVersion, header.HeadFirstTimestamp);
-        header.HeadStreamId = newStreamSlice.Id;
-        header.AggregateId = newStreamSlice.AggregateId;
-        header.HeadPosition = newStreamSlice.Position;
-        header.HeadFirstVersion = events[0].Version;
-        header.HeadFirstTimestamp = events[0].Timestamp;
+        UpdateSliceHeader(header, newStreamSlice, seedId, events);
 
         await AppendToGlobalLogAsync(session, newStreamSlice.Id, newStreamSlice.StreamKey, events, cancellationToken);
         return newStreamSlice;
@@ -82,8 +76,7 @@ public partial class RavenEventStore
             .Include<StreamHeader>(x => x.AggregateId)
             .Load<StreamHeader>(StreamHeader.GetId(streamKey));
 
-        if (header is null)
-            throw new NonExistentStreamException(streamKey);
+        CheckForMissingHeader(header, streamKey);
 
         AssignVersionToEvents(events, header.HeadPosition + 1);
 
@@ -99,11 +92,11 @@ public partial class RavenEventStore
 
         if (aggregate is not null)
         {
-            var archiveDoc = new SliceStreamArchive { State = aggregate };
+            var archiveDoc = new StreamSliceArchive { State = aggregate };
             session.Store(archiveDoc);
             archiveId = archiveDoc.Id;
 
-            var seedDoc = new SliceStreamSeed { State = aggregate };
+            var seedDoc = new StreamSliceSeed { State = aggregate };
             session.Store(seedDoc);
             seedId = seedDoc.Id;
             seedForRebuild = AggregateCloner.Clone(aggregate);
@@ -128,15 +121,21 @@ public partial class RavenEventStore
             session.Advanced.Patch<TStream, string>(header.HeadStreamId, x => x.ArchiveId, archiveId);
         }
             
-        header.AddSliceDescriptor(header.HeadStreamId, header.HeadFirstVersion, header.HeadFirstTimestamp);
-        header.HeadStreamId = newStreamSlice.Id;
-        header.AggregateId = newStreamSlice.AggregateId;
-        header.HeadPosition = newStreamSlice.Position;
-        header.HeadFirstVersion = events[0].Version;
-        header.HeadFirstTimestamp = events[0].Timestamp;
+        UpdateSliceHeader(header, newStreamSlice, seedId, events);
 
         AppendToGlobalLog(session, newStreamSlice.Id, newStreamSlice.StreamKey, events);
         return newStreamSlice;
+    }
+
+    private static void UpdateSliceHeader<TStream>(StreamHeader header, TStream newStreamSlice, string seedId, List<Event> events) where TStream : DocumentStream
+    {
+        header.AddSliceDescriptor(header.HeadStreamId, header.HeadFirstVersion, header.HeadFirstTimestamp);
+        header.HeadStreamId = newStreamSlice.Id;
+        header.AggregateId = newStreamSlice.AggregateId;
+        header.HeadSeedId = seedId;
+        header.HeadPosition = newStreamSlice.Position;
+        header.HeadFirstVersion = events[0].Version;
+        header.HeadFirstTimestamp = events[0].Timestamp;
     }
 
     private static TStream CreateNewStreamSlice<TStream>(string previousStreamId, string newStreamId, Guid streamKey, string aggregateId, string seedId, List<Event> events) where TStream : DocumentStream, new()

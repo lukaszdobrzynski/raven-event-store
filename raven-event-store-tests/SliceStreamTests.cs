@@ -22,7 +22,7 @@ public class SliceStreamTests : TestBase
 
         var nonExistentStreamKey = Guid.NewGuid();
 
-        Assert.ThrowsAsync<NonExistentStreamException>(async () =>
+        Assert.ThrowsAsync<NonExistentHeaderException>(async () =>
             await eventStore.SliceStreamAndStoreAsync<UserStream>(nonExistentStreamKey, "NEW-STREAM-ID", UserActivatedEvent.Create));
     }
 
@@ -246,8 +246,8 @@ public class SliceStreamTests : TestBase
         StreamAssert.NextSliceId(sliceStream1FromDb, sliceStream2FromDb.Id);
         StreamAssert.NextSliceId(sliceStream2FromDb, null);
         
-        var sourceStreamArchiveDoc = await LoadAsync<SliceStreamArchive>(databaseName, sourceStreamFromDb.ArchiveId);
-        var sliceStream1ArchiveDoc = await LoadAsync<SliceStreamArchive>(databaseName, sliceStream1FromDb.ArchiveId);
+        var sourceStreamArchiveDoc = await LoadAsync<StreamSliceArchive>(databaseName, sourceStreamFromDb.ArchiveId);
+        var sliceStream1ArchiveDoc = await LoadAsync<StreamSliceArchive>(databaseName, sliceStream1FromDb.ArchiveId);
 
         var sourceStreamArchive = (User)sourceStreamArchiveDoc.State;
         var sliceStream1Archive = (User)sliceStream1ArchiveDoc.State;
@@ -262,8 +262,8 @@ public class SliceStreamTests : TestBase
         Assert.That(sliceStream1Archive.Role, Is.EqualTo("ADMIN"));
         Assert.That(sliceStream1Archive.Status, Is.EqualTo("ACTIVATED"));
         
-        var sliceStream1SeedDoc = await LoadAsync<SliceStreamSeed>(databaseName, sliceStream1FromDb.SeedId);
-        var sliceStream2SeedDoc = await LoadAsync<SliceStreamSeed>(databaseName, sliceStream2FromDb.SeedId);
+        var sliceStream1SeedDoc = await LoadAsync<StreamSliceSeed>(databaseName, sliceStream1FromDb.SeedId);
+        var sliceStream2SeedDoc = await LoadAsync<StreamSliceSeed>(databaseName, sliceStream2FromDb.SeedId);
 
         var sliceStream1Seed = (User)sliceStream1SeedDoc.State;
         var sliceStream2Seed = (User)sliceStream2SeedDoc.State;

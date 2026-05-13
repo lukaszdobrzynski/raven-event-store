@@ -8,10 +8,11 @@ public class StreamHeader
     public string Id { get; internal set; }
     public string HeadStreamId { get; internal set; }
     public string AggregateId { get; internal set; }
+    public string HeadSeedId { get; internal set; }
     public int HeadPosition { get; internal set; }
     public int HeadFirstVersion { get; internal set; }
     public DateTime HeadFirstTimestamp { get; internal set; }
-    public Guid StreamKey { get; internal set; }
+    public Guid StreamKey { get; private set; }
     public List<SliceDescriptor> Slices { get; internal set; } = [];
 
     internal static StreamHeader Create(

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,66 +8,66 @@ namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    public async Task AppendAndStoreAsync<TStream>(string streamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream
+    public async Task AppendAndStoreAsync(Guid streamKey, IEnumerable<Event> events, CancellationToken cancellationToken = default)
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false, cancellationToken);
+        await AppendAndStoreAsync(streamKey, events?.ToList(), useOptimisticConcurrency: false, cancellationToken);
     }
-    
-    public void AppendAndStore<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
+
+    public void AppendAndStore(Guid streamKey, IEnumerable<Event> events)
     {
-        AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
+        AppendAndStore(streamKey, events?.ToList(), useOptimisticConcurrency: false);
     }
-    
-    public async Task AppendAndStoreAsyncOptimistically<TStream>(string streamId, IEnumerable<Event> events, CancellationToken cancellationToken = default) where TStream : DocumentStream
+
+    public async Task AppendAndStoreAsyncOptimistically(Guid streamKey, IEnumerable<Event> events, CancellationToken cancellationToken = default)
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true, cancellationToken);
+        await AppendAndStoreAsync(streamKey, events?.ToList(), useOptimisticConcurrency: true, cancellationToken);
     }
-    
-    public void AppendAndStoreOptimistically<TStream>(string streamId, IEnumerable<Event> events) where TStream : DocumentStream
+
+    public void AppendAndStoreOptimistically(Guid streamKey, IEnumerable<Event> events)
     {
-        AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
+        AppendAndStore(streamKey, events?.ToList(), useOptimisticConcurrency: true);
     }
-    
-    public async Task AppendAndStoreAsync<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
+
+    public async Task AppendAndStoreAsync(Guid streamKey, params Event[] events)
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false, CancellationToken.None);
+        await AppendAndStoreAsync(streamKey, events?.ToList(), useOptimisticConcurrency: false, CancellationToken.None);
     }
-    
-    public void AppendAndStore<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
+
+    public void AppendAndStore(Guid streamKey, params Event[] events)
     {
-        AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: false);
+        AppendAndStore(streamKey, events?.ToList(), useOptimisticConcurrency: false);
     }
-    
-    public async Task AppendAndStoreAsyncOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
+
+    public async Task AppendAndStoreAsyncOptimistically(Guid streamKey, params Event[] events)
     {
-        await AppendAndStoreAsync<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true, CancellationToken.None);
+        await AppendAndStoreAsync(streamKey, events?.ToList(), useOptimisticConcurrency: true, CancellationToken.None);
     }
-    
-    public void AppendAndStoreOptimistically<TStream>(string streamId, params Event[] events) where TStream : DocumentStream
+
+    public void AppendAndStoreOptimistically(Guid streamKey, params Event[] events)
     {
-        AppendAndStore<TStream>(streamId, events?.ToList(), useOptimisticConcurrency: true);
+        AppendAndStore(streamKey, events?.ToList(), useOptimisticConcurrency: true);
     }
-    
-    private async Task AppendAndStoreAsync<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default) where TStream : DocumentStream
+
+    private async Task AppendAndStoreAsync(Guid streamKey, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default)
     {
         CheckForNullOrEmptyEvents(events);
 
         using (var session = OpenAsyncSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
-            await HandleAppendAsync<TStream>(session, streamId, events, cancellationToken);
+            await HandleAppendAsync(session, streamKey, events, cancellationToken);
             await session.SaveChangesAsync(cancellationToken);
         }
     }
-    
-    private void AppendAndStore<TStream>(string streamId, List<Event> events, bool useOptimisticConcurrency) where TStream : DocumentStream
+
+    private void AppendAndStore(Guid streamKey, List<Event> events, bool useOptimisticConcurrency)
     {
         CheckForNullOrEmptyEvents(events);
 
         using (var session = OpenSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
-            HandleAppend<TStream>(session, streamId, events);
+            HandleAppend(session, streamKey, events);
             session.SaveChanges();
         }
     }

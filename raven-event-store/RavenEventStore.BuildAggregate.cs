@@ -17,9 +17,8 @@ public partial class RavenEventStore
         return instance;
     }
 
-    private static Aggregate ApplyNewEvents(Aggregate existing, IEnumerable<Event> newEvents)
+    private static void ApplyNewEvents(Aggregate existing, IEnumerable<Event> newEvents)
     {
         existing.ApplyEvents(newEvents);
-        return existing;
     }
 }

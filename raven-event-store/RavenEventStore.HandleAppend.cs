@@ -2,101 +2,97 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Raven.Client.Documents.Commands.Batches;
 using Raven.Client.Documents.Session;
+using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
 
 public partial class RavenEventStore
 {
-    private void HandleAppend<TStream>(IDocumentSession session, string streamId, List<Event> events)
-        where TStream : DocumentStream
+    private void HandleAppend(IDocumentSession session, Guid streamKey, List<Event> events)
     {
         CheckForNullOrEmptyEvents(events);
 
-        var stream = session
-            .Include<TStream>(x => x.SeedId)
-            .Include<TStream>(x => x.AggregateId)
-            .Load<TStream>(streamId);
+        var header = session
+            .Include<StreamHeader>(x => x.AggregateId)
+            .Include<StreamHeader>(x => x.HeadSeedId)
+            .Load<StreamHeader>(StreamHeader.GetId(streamKey));
 
-        CheckForNonExistentStream(stream, streamId);
-        CheckForAttemptToAppendToNonHead(stream);
-        AssignVersionToEvents(events, nextVersion: stream.Position + 1);
+        CheckForMissingHeader(header, streamKey);
 
-        var existingSeed = stream.SeedId is not null
-            ? session.Load<SliceStreamSeed>(stream.SeedId)
+        AssignVersionToEvents(events, nextVersion: header.HeadPosition + 1);
+
+        var existingAggregate = header.AggregateId is not null
+            ? session.Load<Aggregate>(header.AggregateId)
             : null;
 
-        CheckForMissingSeed(existingSeed, stream.Id, stream.SeedId);
-        
-        var existingAggregate = stream.AggregateId is not null
-            ? session.Load<Aggregate>(stream.AggregateId)
+        CheckForMissingAggregate(existingAggregate, header.HeadStreamId, header.AggregateId);
+
+        var existingSeed = header.HeadSeedId is not null
+            ? session.Load<StreamSliceSeed>(header.HeadSeedId)
             : null;
 
-        CheckForMissingAggregate(existingAggregate, stream.Id, stream.AggregateId);
-        
-        AddEventsToStream(stream, events);
+        CheckForMissingSeed(existingSeed, header.HeadStreamId, header.HeadSeedId);
 
-        var aggregate = existingAggregate is not null
-            ? ApplyNewEvents(existingAggregate, events)
-            : BuildAggregate(stream, existingSeed?.State);
+        if (existingAggregate is not null)
+            ApplyNewEvents(existingAggregate, events);
 
-        if (aggregate is not null)
-        {
-            aggregate.Id = stream.AggregateId;
-            session.Store(aggregate);
-        }
+        session.Advanced.Defer(BuildPatchCommandData(header.HeadStreamId, events));
 
-        var header = session.Load<StreamHeader>(StreamHeader.GetId(stream.StreamKey));
-        header.HeadPosition = stream.Position;
+        header.HeadPosition = events[^1].Version;
 
-        AppendToGlobalLog(session, streamId, stream.StreamKey, events);
+        AppendToGlobalLog(session, header.HeadStreamId, streamKey, events);
     }
 
-    private async Task HandleAppendAsync<TStream>(IAsyncDocumentSession session, string streamId, List<Event> events, CancellationToken cancellationToken = default)
-        where TStream : DocumentStream
+    private async Task HandleAppendAsync(IAsyncDocumentSession session, Guid streamKey, List<Event> events, CancellationToken cancellationToken = default)
     {
         CheckForNullOrEmptyEvents(events);
 
-        var stream = await session
-            .Include<TStream>(x => x.SeedId)
-            .Include<TStream>(x => x.AggregateId)
-            .LoadAsync<TStream>(streamId, cancellationToken);
+        var header = await session
+            .Include<StreamHeader>(x => x.AggregateId)
+            .Include<StreamHeader>(x => x.HeadSeedId)
+            .LoadAsync<StreamHeader>(StreamHeader.GetId(streamKey), cancellationToken);
 
-        CheckForNonExistentStream(stream, streamId);
-        CheckForAttemptToAppendToNonHead(stream);
-        AssignVersionToEvents(events, nextVersion: stream.Position + 1);
+        CheckForMissingHeader(header, streamKey);
 
-        var existingAggregate = stream.AggregateId is not null
-            ? await session.LoadAsync<Aggregate>(stream.AggregateId, cancellationToken)
+        AssignVersionToEvents(events, nextVersion: header.HeadPosition + 1);
+
+        var existingAggregate = header.AggregateId is not null
+            ? await session.LoadAsync<Aggregate>(header.AggregateId, cancellationToken)
             : null;
 
-        var seedDoc = stream.SeedId is not null
-            ? await session.LoadAsync<SliceStreamSeed>(stream.SeedId, cancellationToken)
+        CheckForMissingAggregate(existingAggregate, header.HeadStreamId, header.AggregateId);
+
+        var existingSeed = header.HeadSeedId is not null
+            ? await session.LoadAsync<StreamSliceSeed>(header.HeadSeedId, cancellationToken)
             : null;
 
-        CheckForMissingSeed(seedDoc, stream.Id, stream.SeedId);
-        CheckForMissingAggregate(existingAggregate, stream.Id, stream.AggregateId);
-        AddEventsToStream(stream, events);
+        CheckForMissingSeed(existingSeed, header.HeadStreamId, header.HeadSeedId);
 
-        var aggregate = existingAggregate is not null
-            ? ApplyNewEvents(existingAggregate, events)
-            : BuildAggregate(stream, seedDoc?.State);
+        if (existingAggregate is not null)
+            ApplyNewEvents(existingAggregate, events);
 
-        if (aggregate is not null)
+        session.Advanced.Defer(BuildPatchCommandData(header.HeadStreamId, events));
+
+        header.HeadPosition = events[^1].Version;
+
+        await AppendToGlobalLogAsync(session, header.HeadStreamId, streamKey, events, cancellationToken);
+    }
+    
+    private static string SerializeEventsForPatch(List<Event> events) =>
+        JsonConvert.SerializeObject(events, typeof(List<Event>),
+            new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
+            });
+
+    private static PatchCommandData BuildPatchCommandData(string headStreamId, List<Event> events) =>
+        new(headStreamId, null, new ()
         {
-            aggregate.Id = stream.AggregateId;
-            await session.StoreAsync(aggregate, cancellationToken);
-        }
-
-        var header = await session.LoadAsync<StreamHeader>(StreamHeader.GetId(stream.StreamKey), cancellationToken);
-        header.HeadPosition = stream.Position;
-
-        await AppendToGlobalLogAsync(session, streamId, stream.StreamKey, events, cancellationToken);
-    }
-
-    private static void AddEventsToStream<TStream>(TStream stream, List<Event> events) where TStream : DocumentStream
-    {
-        stream.Events.AddRange(events);
-        stream.UpdatedAt = DateTime.UtcNow;
-    }
+            Script = "var e = JSON.parse(args.E); this.Events = this.Events.concat(e); this.UpdatedAt = args.T;",
+            Values = { ["E"] = SerializeEventsForPatch(events), ["T"] = DateTime.UtcNow }
+        });
 }
