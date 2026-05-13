@@ -14,9 +14,15 @@ public interface IRavenEventStore
         where TStream : DocumentStream, new();
     Task<TStream> CreateStreamAndStoreAsync<TStream>(string streamId, params Event[] events)
         where TStream : DocumentStream, new();
+    Task<TStream> CreateStreamAndStoreAsync<TStream>(string streamId, IEnumerable<Event> events, CancellationToken cancellationToken = default)
+        where TStream : DocumentStream, new();
     TStream CreateStreamAndStore<TStream>(params Event[] events)
         where TStream : DocumentStream, new();
+    TStream CreateStreamAndStore<TStream>(IEnumerable<Event> events)
+        where TStream : DocumentStream, new();
     TStream CreateStreamAndStore<TStream>(string streamId, params Event[] events)
+        where TStream : DocumentStream, new();
+    TStream CreateStreamAndStore<TStream>(string streamId, IEnumerable<Event> events)
         where TStream : DocumentStream, new();
 
     Task AppendAndStoreAsync(Guid streamKey, params Event[] events);
