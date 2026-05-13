@@ -30,8 +30,6 @@ public partial class RavenEventStore
 
     private async Task AppendAndStoreAsync(Guid streamKey, List<Event> events, bool useOptimisticConcurrency, CancellationToken cancellationToken = default)
     {
-        CheckForNullOrEmptyEvents(events);
-
         using (var session = OpenAsyncSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
@@ -42,8 +40,6 @@ public partial class RavenEventStore
 
     private void AppendAndStore(Guid streamKey, List<Event> events, bool useOptimisticConcurrency)
     {
-        CheckForNullOrEmptyEvents(events);
-
         using (var session = OpenSession())
         {
             session.Advanced.UseOptimisticConcurrency = useOptimisticConcurrency;
