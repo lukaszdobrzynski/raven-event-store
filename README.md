@@ -54,9 +54,9 @@ var eventStore = DocumentStore.GetEventStore("database-name");
 var stream = await eventStore.CreateStreamAndStoreAsync<UserStream>(
     UserRegisteredEvent.Create(username: "event-sorcerer", email: "john@event-sorcerer.com"));
 
-await eventStore.AppendAndStoreAsync<UserStream>(stream.Id, UserVerifiedEvent.Create, UserActivatedEvent.Create);
+await eventStore.AppendAndStoreAsync(stream.StreamKey, UserVerifiedEvent.Create, UserActivatedEvent.Create);
 
-await eventStore.SliceStreamAndStoreAsync<UserStream>(stream.Id, "next-slice-id", UserRoleChangedEvent.Create("SUPER-ADMIN"));
+await eventStore.SliceStreamAndStoreAsync<UserStream>(stream.StreamKey, UserRoleChangedEvent.Create("SUPER-ADMIN"));
 ```
 ### 🪶 License
 
