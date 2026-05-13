@@ -52,19 +52,26 @@ public class RavenEventStoreAggregateRegistry
     
     private void ValidateGenericAggregateType(Type aggregate)
     {
-        var baseType = aggregate.BaseType;
+        var aggregateBase = FindAggregateBase(aggregate);
 
-        if (baseType.IsGenericType == false)
+        if (aggregateBase is null)
             throw new EventStoreConfigurationException($"Aggregate {aggregate.Name} must inherit from Aggregate<T> where T : {nameof(DocumentStream)}.");
 
-        var genericDefinition = baseType.GetGenericTypeDefinition();
-
-        if (genericDefinition != typeof(Aggregate<>))
-            throw new EventStoreConfigurationException($"Aggregate {aggregate.Name} must inherit from Aggregate<T> where T : {nameof(DocumentStream)}.");
-
-        var genericArgument = baseType.GetGenericArguments()[0];
+        var genericArgument = aggregateBase.GetGenericArguments()[0];
 
         if (typeof(DocumentStream).IsAssignableFrom(genericArgument) == false)
             throw new EventStoreConfigurationException($"The type argument {genericArgument.Name} in Aggregate {aggregate.Name} must inherit from {nameof(DocumentStream)} abstract class.");
+    }
+
+    internal static Type FindAggregateBase(Type aggregate)
+    {
+        var type = aggregate.BaseType;
+        while (type is not null)
+        {
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Aggregate<>))
+                return type;
+            type = type.BaseType;
+        }
+        return null;
     }
 }

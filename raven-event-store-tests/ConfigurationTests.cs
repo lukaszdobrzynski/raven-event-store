@@ -113,6 +113,21 @@ public class ConfigurationTests : TestBase
     }
 
     [Test]
+    public async Task Accepts_DerivedAggregate_InMultiLevelHierarchy()
+    {
+        var dbName = await CreateDatabase();
+
+        Assert.DoesNotThrow(() => DocumentStore.AddEventStore(options =>
+        {
+            options.DatabaseName = dbName;
+            options.Aggregates.Register(registry =>
+            {
+                registry.Add<DerivedUser>();
+            });
+        }));
+    }
+
+    [Test]
     public void SameDatabaseName_CanBeRegistered_OnDifferentDocumentStores()
     {
         const string dbName = "db-name";

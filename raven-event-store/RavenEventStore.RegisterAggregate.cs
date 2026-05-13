@@ -7,7 +7,7 @@ public partial class RavenEventStore
 {
     internal void RegisterAggregate(Type aggregate)
     {
-        var streamType = aggregate.BaseType.GetGenericArguments()[0];
+        var streamType = RavenEventStoreAggregateRegistry.FindAggregateBase(aggregate).GetGenericArguments()[0];
 
         if (_aggregatesByStream.TryGetValue(streamType, out var existing))
             throw new EventStoreConfigurationException(

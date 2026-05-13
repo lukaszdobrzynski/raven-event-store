@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Raven.EventStore.Tests.Aggregates;
 using Raven.EventStore.Tests.Asserts;
 using RavenEventStoreTestModels.Aggregates;
 using RavenEventStoreTestModels.Events;
