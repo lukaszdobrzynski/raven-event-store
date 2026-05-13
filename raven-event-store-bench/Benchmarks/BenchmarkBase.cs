@@ -41,7 +41,6 @@ public abstract class BenchmarkBase
         documentStore.AddEventStore(options =>
         {
             options.DatabaseName = DatabaseName;
-            options.UseGlobalStreamLogging = true;
             options.Aggregates.Register(registry =>
             {
                 registry.Add<User>();

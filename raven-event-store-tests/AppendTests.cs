@@ -176,7 +176,6 @@ public class AppendTests : TestBase
     {
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
-            .WithGlobalStreamLogging()
             .Build();
 
         var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");
@@ -209,7 +208,6 @@ public class AppendTests : TestBase
         var databaseName = await CreateDatabase();
         var eventStore = InitEventStoreBuilder(databaseName)
             .WithAggregate(typeof(User))
-            .WithGlobalStreamLogging()
             .Build();
 
         var registered = UserRegisteredEvent.Create("event-sorcerer", "john@event-sorcerer.com", "MEMBER");

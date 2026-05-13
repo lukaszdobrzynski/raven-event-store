@@ -47,7 +47,6 @@ DocumentStore.AddEventStore(options =>
         registry.Add<Product>();
         registry.Add<Cart>();
     });
-    options.UseGlobalStreamLogging = true;
 });
 
 var eventStore = DocumentStore.GetEventStore("database-name");

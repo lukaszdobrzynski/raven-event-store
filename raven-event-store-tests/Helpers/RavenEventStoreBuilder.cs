@@ -8,7 +8,6 @@ public class RavenEventStoreBuilder
 {
     private readonly IDocumentStore _documentStore;
     private string DatabaseName { get; set; }
-    private bool UseGlobalStreamLogging { get; set; }
     private List<Type> Aggregates { get; set; } = [];
 
     private RavenEventStoreBuilder(IDocumentStore documentStore, string databaseName)
@@ -16,14 +15,8 @@ public class RavenEventStoreBuilder
         _documentStore = documentStore;
         DatabaseName = databaseName;
     }
-    
-    public static RavenEventStoreBuilder Init(IDocumentStore documentStore, string databaseName) => new (documentStore, databaseName);
 
-    public RavenEventStoreBuilder WithGlobalStreamLogging()
-    {
-        UseGlobalStreamLogging = true;
-        return this;
-    }
+    public static RavenEventStoreBuilder Init(IDocumentStore documentStore, string databaseName) => new (documentStore, databaseName);
 
     public RavenEventStoreBuilder WithAggregate(Type aggregate)
     {
@@ -42,8 +35,7 @@ public class RavenEventStoreBuilder
         _documentStore.AddEventStore(options =>
         {
             options.DatabaseName = DatabaseName;
-            options.UseGlobalStreamLogging = UseGlobalStreamLogging;
-            
+
             options.Aggregates.Register(registry =>
             {
                 foreach (var aggregate in Aggregates)
