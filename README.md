@@ -58,6 +58,10 @@ await eventStore.AppendAndStoreAsync(stream.StreamKey, UserVerifiedEvent.Create,
 
 await eventStore.SliceStreamAndStoreAsync<UserStream>(stream.StreamKey, UserRoleChangedEvent.Create("SUPER-ADMIN"));
 ```
+### 📊 Benchmarks
+
+See [BENCHMARKS.md](BENCHMARKS.md) for measured performance across all core operations — append, slice, and aggregate replay by version or timestamp. The results show what drives latency and allocation in each case and what slice size to target in practice.
+
 ### 🪶 License
 
 MIT – free to use, contribute, and extend.
