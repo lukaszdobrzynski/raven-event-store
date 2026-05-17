@@ -80,7 +80,8 @@ public partial class RavenEventStore
             Id = streamId,
             StreamKey = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow,
-            Events = events
+            Events = events,
+            Position = events[^1].Version
         };
         
         return stream;

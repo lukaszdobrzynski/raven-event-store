@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Raven.Client.Documents.Commands.Batches;
 using Raven.Client.Documents.Session;
-using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
 
@@ -92,7 +91,7 @@ public partial class RavenEventStore
     private static PatchCommandData BuildPatchCommandData(string headStreamId, List<Event> events) =>
         new(headStreamId, null, new ()
         {
-            Script = "var e = JSON.parse(args.E); this.Events = this.Events.concat(e); this.UpdatedAt = args.T;",
+            Script = "var e = JSON.parse(args.E); this.Events = this.Events.concat(e); this.UpdatedAt = args.T; this.Position = this.Events[this.Events.length - 1].Version;",
             Values = { ["E"] = SerializeEventsForPatch(events), ["T"] = DateTime.UtcNow }
         });
 }

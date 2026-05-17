@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Documents.Session;
-using Raven.EventStore.Exceptions;
 
 namespace Raven.EventStore;
 
@@ -145,6 +144,7 @@ public partial class RavenEventStore
             Id = newStreamId,
             CreatedAt = DateTime.UtcNow,
             Events = events,
+            Position = events[^1].Version,
             StreamKey = streamKey,
             AggregateId = aggregateId,
             SeedId = seedId,
